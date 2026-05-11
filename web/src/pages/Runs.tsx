@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Clock } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Badge } from '@/components/ui/Badge';
 import api from '@/api/client';
+import { useSocket } from '@/hooks/useSocket';
 
 type RunStatus = 'success' | 'failed' | 'running' | 'partial';
 
@@ -39,10 +40,16 @@ function formatDuration(ms: number | null): string {
 export function Runs() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery<RunsResponse>({
     queryKey: ['runs-all'],
     queryFn: () => api.get('/runs?limit=50').then((r) => r.data),
+  });
+
+  // Rafraîchit la liste en temps réel quand un run se termine
+  useSocket('run:update', () => {
+    queryClient.invalidateQueries({ queryKey: ['runs-all'] });
   });
 
   const runs = data?.runs ?? [];

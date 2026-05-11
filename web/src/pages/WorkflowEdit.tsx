@@ -371,7 +371,15 @@ export function WorkflowEdit() {
       isNew
         ? api.post('/workflows', buildPayload())
         : api.put(`/workflows/${id}`, buildPayload()),
-    onSuccess: () => { toast('Workflow sauvegardé', 'success'); navigate('/workflows'); },
+    onSuccess: (res) => {
+      toast('Workflow sauvegardé', 'success');
+      // Si c'est un nouveau workflow webhook, redirige vers l'éditeur pour afficher l'URL
+      if (isNew && buildPayload().triggerType === 'webhook') {
+        navigate(`/workflows/${res.data.id}/edit`);
+      } else {
+        navigate('/workflows');
+      }
+    },
     onError: () => toast('Erreur lors de la sauvegarde', 'error'),
   });
 
