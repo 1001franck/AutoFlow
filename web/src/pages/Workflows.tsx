@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Plus, Zap, Play, Copy, Trash2, Power, History, Pencil } from 'lucide-react';
+import { Plus, Zap, Play, Copy, Trash2, Power, History, Pencil, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +14,7 @@ interface Workflow {
   description: string | null;
   active: boolean;
   triggerType: string;
+  webhookToken: string | null;
   _count: { steps: number; runs: number };
   createdAt: string;
 }
@@ -118,6 +119,16 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
     onError: () => toast('Erreur lors de la suppression', 'error'),
   });
 
+  const webhookUrl = workflow.triggerType === 'webhook' && workflow.webhookToken
+    ? `${import.meta.env.VITE_API_URL ?? 'http://localhost:3000'}/webhook/${workflow.id}/${workflow.webhookToken}`
+    : null;
+
+  const copyWebhook = () => {
+    if (!webhookUrl) return;
+    navigator.clipboard.writeText(webhookUrl);
+    toast('URL webhook copiée', 'success');
+  };
+
   return (
     <div className="flex items-center justify-between px-6 py-4 gap-4">
       {/* Infos */}
@@ -130,6 +141,16 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
           <p className="text-xs text-(--color-muted-foreground) mt-0.5">
             {workflow._count.steps} étape{workflow._count.steps !== 1 ? 's' : ''} · {workflow._count.runs} run{workflow._count.runs !== 1 ? 's' : ''}
           </p>
+          {/* URL webhook cliquable pour les workflows à trigger webhook */}
+          {webhookUrl && (
+            <button
+              onClick={copyWebhook}
+              className="flex items-center gap-1 mt-1 text-xs text-(--color-muted-foreground) hover:text-(--color-foreground) transition-colors"
+            >
+              <Link className="h-3 w-3" />
+              <span className="truncate max-w-xs font-mono">{webhookUrl}</span>
+            </button>
+          )}
         </div>
       </div>
 
