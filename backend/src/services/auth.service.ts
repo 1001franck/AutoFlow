@@ -16,7 +16,8 @@ export async function register(email: string, password: string) {
   });
 
   const accessToken = signAccessToken(user.id);
-  return { user, accessToken };
+  const refreshToken = signRefreshToken(user.id);
+  return { user, accessToken, refreshToken };
 }
 
 export async function login(email: string, password: string) {

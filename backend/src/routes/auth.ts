@@ -1,5 +1,8 @@
 import { Router, Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import { prisma } from '../lib/prisma';
 import * as authService from '../services/auth.service';
+import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -26,8 +29,9 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 
   try {
-    const result = await authService.register(email, password);
-    res.status(201).json(result);
+    const { user, accessToken, refreshToken } = await authService.register(email, password);
+    res.cookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTIONS);
+    res.status(201).json({ user, accessToken });
   } catch (err) {
     if (err instanceof Error && err.message === 'EMAIL_TAKEN') {
       res.status(409).json({ error: 'Email déjà utilisé' });
@@ -77,7 +81,8 @@ router.post('/refresh', (req: Request, res: Response) => {
 });
 
 // PATCH /auth/password — change le mot de passe de l'utilisateur connecté
-router.patch('/password', async (req: Request, res: Response) => {
+router.patch('/password', requireAuth, async (req: Request, res: Response) => {
+  const userId = (req as unknown as AuthRequest).userId;
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword) {
@@ -85,38 +90,26 @@ router.patch('/password', async (req: Request, res: Response) => {
     return;
   }
 
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'Token manquant' });
-      return;
-    }
-    const token = authHeader.slice(7);
-    const { default: jwt } = await import('jsonwebtoken');
-    const { config } = await import('../config');
-    const payload = jwt.verify(token, config.jwt.secret) as { userId: string };
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) { res.status(404).json({ error: 'Utilisateur introuvable' }); return; }
 
-    const { default: bcrypt } = await import('bcrypt');
-    const { prisma } = await import('../lib/prisma');
+  const valid = await bcrypt.compare(currentPassword, user.password);
+  if (!valid) { res.status(401).json({ error: 'Mot de passe actuel incorrect' }); return; }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
-    if (!user) { res.status(404).json({ error: 'Utilisateur introuvable' }); return; }
+  const hashed = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
 
-    const valid = await bcrypt.compare(currentPassword, user.password);
-    if (!valid) { res.status(401).json({ error: 'Mot de passe actuel incorrect' }); return; }
-
-    const hashed = await bcrypt.hash(newPassword, 12);
-    await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
-
-    res.json({ message: 'Mot de passe mis à jour' });
-  } catch {
-    res.status(401).json({ error: 'Token invalide' });
-  }
+  res.json({ message: 'Mot de passe mis à jour' });
 });
 
 // POST /auth/logout — supprime le cookie de refresh token
 router.post('/logout', (_req: Request, res: Response) => {
-  res.clearCookie(REFRESH_COOKIE);
+  // Les options doivent correspondre exactement à celles utilisées lors de la création
+  res.clearCookie(REFRESH_COOKIE, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+  });
   res.json({ message: 'Déconnecté' });
 });
 
