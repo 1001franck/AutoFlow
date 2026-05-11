@@ -12,7 +12,9 @@
     "test": "echo \"No tests yet\" && exit 0",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "docker:up": "docker compose up -d postgres redis",
+    "docker:down": "docker compose down"
   },
   "keywords": [],
   "author": "",
