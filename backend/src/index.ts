@@ -5,6 +5,10 @@ import { config } from './config';
 import { initSocket } from './lib/socket';
 import authRoutes from './routes/auth';
 import webhookRoutes from './routes/webhook';
+import workflowRoutes from './routes/workflows';
+import runsRoutes from './routes/runs';
+import credentialsRoutes from './routes/credentials';
+import dashboardRoutes from './routes/dashboard';
 import { startWorker } from './engine/worker';
 import { startScheduler } from './engine/cron';
 
@@ -17,6 +21,10 @@ app.use(cookieParser());
 // Routes
 app.use('/auth', authRoutes);
 app.use('/webhook', webhookRoutes);
+app.use('/workflows', workflowRoutes);
+app.use('/', runsRoutes);
+app.use('/credentials', credentialsRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 // Healthcheck pour Docker et monitoring
 app.get('/health', (_req, res) => {
