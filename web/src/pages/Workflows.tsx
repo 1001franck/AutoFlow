@@ -6,6 +6,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import api from '@/api/client';
+import { useToast } from '@/components/ui/Toast';
 
 interface Workflow {
   id: string;
@@ -89,26 +90,32 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['workflows'] });
 
   const toggle = useMutation({
     mutationFn: () => api.patch(`/workflows/${workflow.id}/toggle`),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); toast(workflow.active ? 'Workflow désactivé' : 'Workflow activé', 'success'); },
+    onError: () => toast('Erreur lors du changement de statut', 'error'),
   });
 
   const run = useMutation({
     mutationFn: () => api.post(`/workflows/${workflow.id}/run`),
+    onSuccess: () => toast('Workflow lancé', 'success'),
+    onError: () => toast('Erreur lors de l\'exécution', 'error'),
   });
 
   const duplicate = useMutation({
     mutationFn: () => api.post(`/workflows/${workflow.id}/duplicate`),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); toast('Workflow dupliqué', 'success'); },
+    onError: () => toast('Erreur lors de la duplication', 'error'),
   });
 
   const remove = useMutation({
     mutationFn: () => api.delete(`/workflows/${workflow.id}`),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); toast('Workflow supprimé', 'info'); },
+    onError: () => toast('Erreur lors de la suppression', 'error'),
   });
 
   return (

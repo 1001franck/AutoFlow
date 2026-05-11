@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import api from '@/api/client';
+import { useToast } from '@/components/ui/Toast';
 
 interface Credential {
   id: string;
@@ -107,14 +108,18 @@ function CredentialList({ credentials }: { credentials: Credential[] }) {
 
 function CredentialRow({ credential }: { credential: Credential }) {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const remove = useMutation({
     mutationFn: () => api.delete(`/credentials/${credential.id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['credentials'] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['credentials'] }); toast('Identifiant supprimé', 'info'); },
+    onError: () => toast('Erreur lors de la suppression', 'error'),
   });
 
   const test = useMutation({
     mutationFn: () => api.get(`/credentials/${credential.id}/test`),
+    onSuccess: () => toast('Connexion réussie ✓', 'success'),
+    onError: () => toast('Connexion échouée — vérifiez vos clés', 'error'),
   });
 
   return (
@@ -166,13 +171,17 @@ function AddCredentialForm({ onClose }: { onClose: () => void }) {
   const [label, setLabel] = useState('');
   const [fields, setFields] = useState<Record<string, string>>({});
 
+  const toast = useToast();
+
   const create = useMutation({
     mutationFn: () =>
       api.post('/credentials', { label, connector, data: fields }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credentials'] });
+      toast('Identifiant ajouté', 'success');
       onClose();
     },
+    onError: () => toast('Erreur lors de la création', 'error'),
   });
 
   const handleField = (key: string, value: string) =>
