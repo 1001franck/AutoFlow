@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Plus, Zap, Play, Copy, Trash2, Power, History, Pencil, Link } from 'lucide-react';
@@ -5,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Dialog } from '@/components/ui/Dialog';
 import api from '@/api/client';
 import { useToast } from '@/components/ui/Toast';
 
@@ -92,6 +94,7 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['workflows'] });
 
@@ -131,6 +134,16 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
 
   return (
     <div className="flex items-center justify-between px-6 py-4 gap-4">
+      {showConfirm && (
+        <Dialog
+          title={`${t('workflow.delete')} « ${workflow.name} » ?`}
+          description={t('workflow.deleteConfirm')}
+          confirmLabel={t('workflow.delete')}
+          destructive
+          onConfirm={() => remove.mutate()}
+          onClose={() => setShowConfirm(false)}
+        />
+      )}
       {/* Infos */}
       <div className="flex items-center gap-4 min-w-0">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--color-muted)">
@@ -219,7 +232,7 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
           size="icon"
           title={t('workflow.delete')}
           disabled={remove.isPending}
-          onClick={() => { if (confirm(workflow.name + ' ?')) remove.mutate(); }}
+          onClick={() => setShowConfirm(true)}
           className="text-(--color-destructive) hover:text-(--color-destructive)"
         >
           <Trash2 className="h-4 w-4" />

@@ -44,7 +44,8 @@
     "name": "Name",
     "description": "Description",
     "noWorkflows": "No workflows yet",
-    "createFirst": "Create your first workflow"
+    "createFirst": "Create your first workflow",
+    "deleteConfirm": "The workflow and all its execution history will be permanently deleted."
   },
   "run": {
     "title": "History",

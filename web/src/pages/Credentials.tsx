@@ -6,6 +6,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
+import { Dialog } from '@/components/ui/Dialog';
 import api from '@/api/client';
 import { useToast } from '@/components/ui/Toast';
 
@@ -109,6 +110,7 @@ function CredentialList({ credentials }: { credentials: Credential[] }) {
 function CredentialRow({ credential }: { credential: Credential }) {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const remove = useMutation({
     mutationFn: () => api.delete(`/credentials/${credential.id}`),
@@ -124,6 +126,16 @@ function CredentialRow({ credential }: { credential: Credential }) {
 
   return (
     <div className="flex items-center justify-between px-6 py-4 gap-4">
+      {showConfirm && (
+        <Dialog
+          title={`Supprimer « ${credential.label} » ?`}
+          description="Cette action est irréversible. L'identifiant sera définitivement supprimé."
+          confirmLabel="Supprimer"
+          destructive
+          onConfirm={() => remove.mutate()}
+          onClose={() => setShowConfirm(false)}
+        />
+      )}
       <div className="flex items-center gap-4 min-w-0">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--color-muted)">
           <KeyRound className="h-4 w-4 text-(--color-foreground)" strokeWidth={1.5} />
@@ -154,7 +166,7 @@ function CredentialRow({ credential }: { credential: Credential }) {
           size="icon"
           title="Supprimer"
           disabled={remove.isPending}
-          onClick={() => { if (confirm(credential.label + ' ?')) remove.mutate(); }}
+          onClick={() => setShowConfirm(true)}
           className="text-(--color-destructive) hover:text-(--color-destructive)"
         >
           <Trash2 className="h-4 w-4" />
