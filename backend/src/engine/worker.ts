@@ -19,8 +19,16 @@ export function startWorker() {
     }
   );
 
+  worker.on('completed', (job) => {
+    console.log(`Job ${job.id} terminé`);
+  });
+
   worker.on('failed', (job, err) => {
     console.error(`Job ${job?.id} échoué :`, err.message);
+  });
+
+  worker.on('error', (err) => {
+    console.error('Worker erreur Redis :', err.message);
   });
 
   console.log('Worker BullMQ démarré');
@@ -87,6 +95,7 @@ async function processJob(job: Job<WorkflowJobData>) {
       });
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error(`Step ${step.connector}.${step.action} échoué :`, error);
       globalStatus = globalStatus === 'success' ? 'partial' : 'failed';
 
       await prisma.stepLog.create({

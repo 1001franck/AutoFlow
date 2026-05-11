@@ -59,7 +59,10 @@ router.get('/runs/:runId', async (req, res: Response) => {
   const run = await prisma.run.findUnique({
     where: { id: runId },
     include: {
-      stepLogs: { orderBy: { position: 'asc' } },
+      stepLogs: {
+        orderBy: { position: 'asc' },
+        include: { step: { select: { connector: true, action: true } } },
+      },
       workflow: { select: { userId: true, name: true } },
     },
   });

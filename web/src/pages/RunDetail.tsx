@@ -15,13 +15,14 @@ type RunStatus = 'success' | 'failed' | 'running' | 'partial';
 
 interface StepLog {
   id: string;
-  stepId: string;
+  stepId: string | null;
+  position: number;
   status: StepStatus;
-  startedAt: string;
-  finishedAt: string | null;
+  executedAt: string;
+  durationMs: number | null;
   output: Record<string, unknown> | null;
   error: string | null;
-  step: { name: string; type: string };
+  step: { connector: string; action: string } | null;
 }
 
 interface RunDetail {
@@ -29,6 +30,7 @@ interface RunDetail {
   status: RunStatus;
   startedAt: string;
   finishedAt: string | null;
+  durationMs: number | null;
   stepLogs: StepLog[];
 }
 
@@ -47,9 +49,8 @@ function StepIcon({ status }: { status: StepStatus }) {
   return <Clock className="h-4 w-4 text-(--color-muted-foreground)" />;
 }
 
-function duration(start: string, end: string | null): string {
-  if (!end) return '…';
-  const ms = new Date(end).getTime() - new Date(start).getTime();
+function formatMs(ms: number | null): string {
+  if (ms === null) return '—';
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
 }
@@ -70,13 +71,14 @@ function StepRow({ log }: { log: StepLog }) {
 
         {/* Nom + type */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{log.step.name}</p>
-          <p className="text-xs text-(--color-muted-foreground) mt-0.5">{log.step.type}</p>
+          <p className="text-sm font-medium truncate">
+            {log.step ? `${log.step.connector}.${log.step.action}` : `Étape ${log.position + 1}`}
+          </p>
         </div>
 
         {/* Durée */}
         <span className="text-xs text-(--color-muted-foreground) tabular-nums shrink-0">
-          {duration(log.startedAt, log.finishedAt)}
+          {formatMs(log.durationMs)}
         </span>
 
         {/* Chevron si détails */}
@@ -152,7 +154,7 @@ export function RunDetail() {
           {/* Méta */}
           <div className="flex gap-6 text-sm text-(--color-muted-foreground)">
             <span>{t('run.startedAt')} : {new Date(run.startedAt).toLocaleString()}</span>
-            <span>{t('run.duration')} : {duration(run.startedAt, run.finishedAt)}</span>
+            <span>{t('run.duration')} : {formatMs(run.durationMs)}</span>
           </div>
 
           {/* Timeline des étapes */}
