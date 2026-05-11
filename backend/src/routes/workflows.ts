@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { Step } from '../generated/prisma/client';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { generateWebhookToken } from '../utils/crypto';
 import { workflowQueue } from '../engine/queue';
@@ -201,7 +202,7 @@ router.post('/:id/duplicate', async (req, res: Response) => {
       webhookToken: source.triggerType === 'webhook' ? generateWebhookToken() : undefined,
       active: false, // La copie démarre toujours inactive
       steps: {
-        create: source.steps.map(({ position, connector, action, config, credentialId }) => ({
+        create: source.steps.map(({ position, connector, action, config, credentialId }: Step) => ({
           position,
           connector,
           action,
