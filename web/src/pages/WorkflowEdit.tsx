@@ -279,7 +279,7 @@ export function WorkflowEdit() {
     enabled: !isNew,
   });
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (existing) {
       setName(existing.name);
@@ -299,6 +299,7 @@ export function WorkflowEdit() {
       }]);
     }
   }, [existing, isNew, setNodes, setEdges]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const onConnect = useCallback(
     (c: Connection) =>
