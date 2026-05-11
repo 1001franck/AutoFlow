@@ -1,17 +1,23 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { config } from './config';
+import authRoutes from './routes/auth';
 
 const app = express();
-const PORT = config.port;
 
 app.use(express.json());
+app.use(cookieParser());
 
+// Routes
+app.use('/auth', authRoutes);
+
+// Healthcheck pour Docker et monitoring
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(config.port, () => {
+  console.log(`Serveur démarré sur le port ${config.port}`);
 });
 
 export default app;
