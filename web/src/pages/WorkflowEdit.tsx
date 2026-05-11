@@ -16,7 +16,7 @@ import {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { ArrowLeft, Save, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X, Link } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import api from '@/api/client';
@@ -42,6 +42,7 @@ interface WorkflowDetail {
   name: string;
   triggerType: string;
   triggerConfig: Record<string, string>;
+  webhookToken: string | null;
   // La BDD stocke connector + action séparément et position au lieu de order
   steps: { id: string; connector: string; action: string; config: Record<string, string>; position: number; credentialId: string | null }[];
 }
@@ -260,6 +261,7 @@ export function WorkflowEdit() {
   const [name, setName] = useState('Nouveau workflow');
   const [triggerType, setTriggerType] = useState(TRIGGER_TYPES[0].type);
   const [triggerConfig, setTriggerConfig] = useState<Record<string, string>>({});
+  const [webhookToken, setWebhookToken] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -280,6 +282,7 @@ export function WorkflowEdit() {
       setName(existing.name);
       setTriggerType(existing.triggerType);
       setTriggerConfig(existing.triggerConfig);
+      setWebhookToken(existing.webhookToken);
       const { nodes: n, edges: e } = workflowToGraph(existing);
       setNodes(n);
       setEdges(e);
@@ -389,6 +392,20 @@ export function WorkflowEdit() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* URL webhook — visible uniquement si le trigger est de type webhook et que le workflow existe */}
+          {triggerType === 'webhook' && webhookToken && (
+            <button
+              onClick={() => {
+                const url = `${import.meta.env.VITE_API_URL ?? 'http://localhost:3000'}/webhook/${id}/${webhookToken}`;
+                navigator.clipboard.writeText(url);
+                toast('URL webhook copiée', 'success');
+              }}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-(--color-border) text-xs text-(--color-muted-foreground) hover:text-(--color-foreground) hover:border-(--color-foreground) transition-colors"
+            >
+              <Link className="h-3 w-3" />
+              Copier l'URL webhook
+            </button>
+          )}
           <select
             value={triggerType}
             onChange={(e) => {
