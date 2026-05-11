@@ -8,9 +8,19 @@ export interface WorkflowJobData {
 }
 
 // Connexion Redis partagée entre la queue et le worker
-export const redisConnection = {
-  url: config.redis.url,
-};
+// Détecte rediss:// pour activer TLS (Render Redis en production)
+function buildRedisConnection() {
+  const url = new URL(config.redis.url);
+  const tls = url.protocol === 'rediss:' ? { rejectUnauthorized: false } : undefined;
+  return {
+    host: url.hostname,
+    port: parseInt(url.port || '6379', 10),
+    password: url.password || undefined,
+    tls,
+  };
+}
+
+export const redisConnection = buildRedisConnection();
 
 export const workflowQueue = new Queue<WorkflowJobData>('workflows', {
   connection: redisConnection,

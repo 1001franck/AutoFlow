@@ -16,10 +16,12 @@ router.get('/stats', async (req, res: Response) => {
   const since = new Date();
   since.setDate(since.getDate() - 7);
 
-  const [totalRuns, successRuns, runsLast7Days, topWorkflows] = await Promise.all([
+  const [totalRuns, successRuns, activeWorkflows, runsLast7Days, topWorkflows] = await Promise.all([
     prisma.run.count({ where: { workflow: { userId } } }),
 
     prisma.run.count({ where: { workflow: { userId }, status: 'success' } }),
+
+    prisma.workflow.count({ where: { userId, active: true } }),
 
     // Nombre de runs par jour sur 7 jours — groupé côté JS pour éviter du SQL raw
     prisma.run.findMany({
@@ -48,6 +50,7 @@ router.get('/stats', async (req, res: Response) => {
   res.json({
     totalRuns,
     successRate,
+    activeWorkflows,
     runsLast7Days: Object.entries(runsByDay).map(([date, count]) => ({ date, count })),
     topWorkflows: topWorkflows.map((w: WorkflowWithCount) => ({
       id: w.id,

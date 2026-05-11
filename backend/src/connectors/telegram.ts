@@ -5,6 +5,7 @@ import { decrypt } from '../utils/crypto';
 const send_message: ConnectorAction = async (params, credential) => {
   if (!credential) throw new Error('telegram.send_message : credential manquant');
 
+  // Les données sont chiffrées en BDD — on déchiffre avant usage
   const { botToken } = decrypt<{ botToken: string }>(credential.data);
   const chatId = params['chatId'] as string;
   const message = params['message'] as string;

@@ -29,6 +29,7 @@ function getOAuthClient(cred: GmailCredential) {
 export const send_email: ConnectorAction = async (params, credential) => {
   if (!credential) throw new Error('gmail.send_email : credential manquant');
 
+  // Les données sont chiffrées en BDD — on déchiffre avant usage
   const cred = decrypt<GmailCredential>(credential.data);
   const auth = getOAuthClient(cred);
   const gmail = google.gmail({ version: 'v1', auth });

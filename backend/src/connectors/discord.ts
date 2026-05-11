@@ -5,6 +5,7 @@ import { decrypt } from '../utils/crypto';
 const send_message: ConnectorAction = async (params, credential) => {
   if (!credential) throw new Error('discord.send_message : credential manquant');
 
+  // Les données sont chiffrées en BDD — on déchiffre avant usage
   const { botToken } = decrypt<{ botToken: string }>(credential.data);
   const channelId = params['channelId'] as string;
   const message = params['message'] as string;

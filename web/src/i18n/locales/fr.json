@@ -1,0 +1,79 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "workflows": "Workflows",
+    "credentials": "Identifiants",
+    "runs": "Exécutions",
+    "settings": "Paramètres"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "register": "Créer un compte",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "loginTitle": "Bon retour",
+    "loginSubtitle": "Connectez-vous à votre espace AutoFlow",
+    "registerTitle": "Créer un compte",
+    "registerSubtitle": "Commencez à automatiser en quelques minutes",
+    "noAccount": "Pas encore de compte ?",
+    "alreadyAccount": "Déjà un compte ?"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "totalRuns": "Exécutions totales",
+    "successRate": "Taux de succès",
+    "activeWorkflows": "Workflows actifs",
+    "last7Days": "7 derniers jours",
+    "topWorkflows": "Workflows les plus actifs",
+    "recentActivity": "Activité récente"
+  },
+  "workflow": {
+    "title": "Workflows",
+    "new": "Nouveau workflow",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "run": "Exécuter",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "trigger": "Déclencheur",
+    "steps": "Étapes",
+    "name": "Nom",
+    "description": "Description",
+    "noWorkflows": "Aucun workflow pour l'instant",
+    "createFirst": "Créez votre premier workflow"
+  },
+  "run": {
+    "title": "Historique",
+    "status": "Statut",
+    "duration": "Durée",
+    "startedAt": "Démarré le",
+    "success": "Succès",
+    "failed": "Échoué",
+    "running": "En cours",
+    "partial": "Partiel",
+    "details": "Voir les détails",
+    "noRuns": "Aucune exécution"
+  },
+  "credential": {
+    "title": "Identifiants",
+    "new": "Ajouter un identifiant",
+    "connector": "Service",
+    "label": "Libellé",
+    "delete": "Supprimer",
+    "noCredentials": "Aucun identifiant enregistré"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "back": "Retour",
+    "search": "Rechercher"
+  }
+}

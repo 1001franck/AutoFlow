@@ -1,0 +1,79 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "workflows": "Workflows",
+    "credentials": "Credentials",
+    "runs": "Runs",
+    "settings": "Settings"
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "register": "Create account",
+    "email": "Email address",
+    "password": "Password",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to your AutoFlow account",
+    "registerTitle": "Create an account",
+    "registerSubtitle": "Start automating in minutes",
+    "noAccount": "Don't have an account?",
+    "alreadyAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalRuns": "Total runs",
+    "successRate": "Success rate",
+    "activeWorkflows": "Active workflows",
+    "last7Days": "Last 7 days",
+    "topWorkflows": "Most active workflows",
+    "recentActivity": "Recent activity"
+  },
+  "workflow": {
+    "title": "Workflows",
+    "new": "New workflow",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "run": "Run",
+    "active": "Active",
+    "inactive": "Inactive",
+    "trigger": "Trigger",
+    "steps": "Steps",
+    "name": "Name",
+    "description": "Description",
+    "noWorkflows": "No workflows yet",
+    "createFirst": "Create your first workflow"
+  },
+  "run": {
+    "title": "History",
+    "status": "Status",
+    "duration": "Duration",
+    "startedAt": "Started at",
+    "success": "Success",
+    "failed": "Failed",
+    "running": "Running",
+    "partial": "Partial",
+    "details": "View details",
+    "noRuns": "No runs yet"
+  },
+  "credential": {
+    "title": "Credentials",
+    "new": "Add credential",
+    "connector": "Service",
+    "label": "Label",
+    "delete": "Delete",
+    "noCredentials": "No credentials saved"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "back": "Back",
+    "search": "Search"
+  }
+}

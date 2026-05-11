@@ -7,7 +7,7 @@ const IV_LENGTH = 16;
 // Chiffre une valeur JSON en AES-256-CBC avant stockage en BDD
 export function encrypt(data: object): string {
   const iv = randomBytes(IV_LENGTH);
-  const cipher = createCipheriv(ALGORITHM, Buffer.from(config.encryptionKey), iv);
+  const cipher = createCipheriv(ALGORITHM, Buffer.from(config.encryptionKey, 'hex'), iv);
   const encrypted = Buffer.concat([cipher.update(JSON.stringify(data)), cipher.final()]);
   // Format stocké : iv:données — les deux en hex pour rester lisibles en BDD
   return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
@@ -17,7 +17,7 @@ export function encrypt(data: object): string {
 export function decrypt<T = Record<string, unknown>>(stored: string): T {
   const [ivHex, encryptedHex] = stored.split(':');
   const iv = Buffer.from(ivHex, 'hex');
-  const decipher = createDecipheriv(ALGORITHM, Buffer.from(config.encryptionKey), iv);
+  const decipher = createDecipheriv(ALGORITHM, Buffer.from(config.encryptionKey, 'hex'), iv);
   const decrypted = Buffer.concat([
     decipher.update(Buffer.from(encryptedHex, 'hex')),
     decipher.final(),
