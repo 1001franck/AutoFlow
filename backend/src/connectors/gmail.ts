@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { ConnectorAction } from './index';
 import { config } from '../config';
+import { decrypt } from '../utils/crypto';
 
 interface GmailCredential {
   refreshToken: string;
@@ -28,7 +29,7 @@ function getOAuthClient(cred: GmailCredential) {
 export const send_email: ConnectorAction = async (params, credential) => {
   if (!credential) throw new Error('gmail.send_email : credential manquant');
 
-  const cred = JSON.parse(credential.data) as GmailCredential;
+  const cred = decrypt<GmailCredential>(credential.data);
   const auth = getOAuthClient(cred);
   const gmail = google.gmail({ version: 'v1', auth });
 
