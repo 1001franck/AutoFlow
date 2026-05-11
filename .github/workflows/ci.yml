@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'sprint/**']
   pull_request:
     branches: [main]
 
@@ -10,8 +10,6 @@ jobs:
   backend:
     name: Backend — typecheck & lint
     runs-on: ubuntu-latest
-    # Ne tourne que si le backend existe déjà
-    if: ${{ hashFiles('backend/package.json') != '' }}
     defaults:
       run:
         working-directory: backend
@@ -19,7 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Vérifie que le backend existe
+        id: check
+        run: test -f package.json && echo "exists=true" >> $GITHUB_OUTPUT || echo "exists=false" >> $GITHUB_OUTPUT
+
       - name: Setup Node.js 20
+        if: steps.check.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -27,21 +30,24 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
+        if: steps.check.outputs.exists == 'true'
         run: npm ci
 
       - name: TypeScript check
+        if: steps.check.outputs.exists == 'true'
         run: npm run typecheck
 
       - name: Lint
+        if: steps.check.outputs.exists == 'true'
         run: npm run lint
 
       - name: Tests
+        if: steps.check.outputs.exists == 'true'
         run: npm test --if-present
 
   web:
     name: Web — typecheck & lint
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('web/package.json') != '' }}
     defaults:
       run:
         working-directory: web
@@ -49,7 +55,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Vérifie que le web existe
+        id: check
+        run: test -f package.json && echo "exists=true" >> $GITHUB_OUTPUT || echo "exists=false" >> $GITHUB_OUTPUT
+
       - name: Setup Node.js 20
+        if: steps.check.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -57,10 +68,13 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: Install dependencies
+        if: steps.check.outputs.exists == 'true'
         run: npm ci
 
       - name: TypeScript check
+        if: steps.check.outputs.exists == 'true'
         run: npm run typecheck
 
       - name: Lint
+        if: steps.check.outputs.exists == 'true'
         run: npm run lint
