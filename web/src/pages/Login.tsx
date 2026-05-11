@@ -2,8 +2,9 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Zap } from 'lucide-react';
+import { Zap, Sun, Moon } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import api, { setAccessToken } from '@/api/client';
@@ -12,6 +13,7 @@ import animationUrl from '@/assets/animation.lottie';
 export function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -72,21 +74,28 @@ export function Login() {
       </div>
 
       {/* ── Côté droit — formulaire ── */}
-      <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-20 bg-white dark:bg-[#0a0a0a]">
+      <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-20 bg-(--color-background) relative">
+
+        {/* Bouton thème */}
+        <div className="absolute top-4 right-4">
+          <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        </div>
 
         {/* Logo mobile */}
         <div className="flex items-center gap-2 mb-12 lg:hidden">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black">
-            <Zap className="h-4 w-4 text-white" strokeWidth={2.5} />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-(--color-primary)">
+            <Zap className="h-4 w-4 text-(--color-primary-foreground)" strokeWidth={2.5} />
           </div>
           <span className="text-base font-semibold">AutoFlow</span>
         </div>
 
         <div className="w-full max-w-sm">
-          <h2 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-1.5">
+          <h2 className="text-2xl font-semibold tracking-tight text-(--color-foreground) mb-1.5">
             {mode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
           </h2>
-          <p className="text-sm text-[#737373] mb-8">
+          <p className="text-sm text-(--color-muted-foreground) mb-8">
             {mode === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
           </p>
 
@@ -118,11 +127,11 @@ export function Login() {
             </Button>
           </form>
 
-          <p className="mt-6 text-sm text-[#737373] text-center">
+          <p className="mt-6 text-sm text-(--color-muted-foreground) text-center">
             {mode === 'login' ? t('auth.noAccount') : t('auth.alreadyAccount')}{' '}
             <button
               onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
-              className="text-black dark:text-white font-medium hover:underline underline-offset-4"
+              className="text-(--color-foreground) font-medium hover:underline underline-offset-4"
             >
               {mode === 'login' ? t('auth.register') : t('auth.login')}
             </button>

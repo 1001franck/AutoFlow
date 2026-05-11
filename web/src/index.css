@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Active le dark mode via la classe .dark (next-themes) plutôt que la media query */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Lexend Deca', sans-serif;
 
