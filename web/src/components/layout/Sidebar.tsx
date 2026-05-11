@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Workflow, KeyRound, Zap, History } from 'lucide-react';
+import { LayoutDashboard, Workflow, KeyRound, Zap, History, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -8,6 +8,10 @@ const navItems = [
   { to: '/workflows',   icon: Workflow,         labelKey: 'nav.workflows' },
   { to: '/runs',        icon: History,          labelKey: 'nav.runs' },
   { to: '/credentials', icon: KeyRound,         labelKey: 'nav.credentials' },
+];
+
+const bottomItems = [
+  { to: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
 
 export function Sidebar() {
@@ -23,7 +27,7 @@ export function Sidebar() {
         <span className="text-base font-semibold tracking-tight">AutoFlow</span>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation principale */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map(({ to, icon: Icon, labelKey }) => (
           <NavLink
@@ -43,6 +47,27 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Navigation secondaire en bas */}
+      <div className="px-3 pb-4 border-t border-(--color-border) pt-3 space-y-0.5">
+        {bottomItems.map(({ to, icon: Icon, labelKey }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150',
+                isActive
+                  ? 'bg-(--color-primary) text-(--color-primary-foreground) font-medium'
+                  : 'text-(--color-muted-foreground) hover:bg-(--color-muted) hover:text-(--color-foreground)'
+              )
+            }
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            {t(labelKey)}
+          </NavLink>
+        ))}
+      </div>
     </aside>
   );
 }

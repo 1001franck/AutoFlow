@@ -73,6 +73,44 @@ router.post('/refresh', (req: Request, res: Response) => {
   }
 });
 
+// PATCH /auth/password — change le mot de passe de l'utilisateur connecté
+router.patch('/password', async (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({ error: 'currentPassword et newPassword requis' });
+    return;
+  }
+
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Token manquant' });
+      return;
+    }
+    const token = authHeader.slice(7);
+    const { default: jwt } = await import('jsonwebtoken');
+    const { config } = await import('../config');
+    const payload = jwt.verify(token, config.jwt.secret) as { userId: string };
+
+    const { default: bcrypt } = await import('bcrypt');
+    const { prisma } = await import('../lib/prisma');
+
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user) { res.status(404).json({ error: 'Utilisateur introuvable' }); return; }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) { res.status(401).json({ error: 'Mot de passe actuel incorrect' }); return; }
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
+
+    res.json({ message: 'Mot de passe mis à jour' });
+  } catch {
+    res.status(401).json({ error: 'Token invalide' });
+  }
+});
+
 // POST /auth/logout — supprime le cookie de refresh token
 router.post('/logout', (_req: Request, res: Response) => {
   res.clearCookie(REFRESH_COOKIE);
