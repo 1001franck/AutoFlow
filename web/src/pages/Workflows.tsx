@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Plus, Zap, Play, Copy, Trash2, Power, History } from 'lucide-react';
+import { Plus, Zap, Play, Copy, Trash2, Power, History, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
@@ -131,6 +131,16 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
         <Badge variant={workflow.active ? 'success' : 'default'}>
           {workflow.active ? t('workflow.active') : t('workflow.inactive')}
         </Badge>
+
+        {/* Modifier */}
+        <Button
+          variant="ghost"
+          size="icon"
+          title={t('workflow.edit')}
+          onClick={() => navigate(`/workflows/${workflow.id}/edit`)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
 
         {/* Toggle actif */}
         <Button
