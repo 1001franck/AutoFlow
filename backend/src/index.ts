@@ -1,5 +1,6 @@
 import http from 'http';
 import express from 'express';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { config } from './config';
 import { initSocket } from './lib/socket';
@@ -15,6 +16,7 @@ import { startScheduler } from './engine/cron';
 const app = express();
 const httpServer = http.createServer(app);
 
+app.use(cors({ origin: config.cors.frontendUrl, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
