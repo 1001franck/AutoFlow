@@ -34,4 +34,10 @@ export const config = {
   cors: {
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   },
+
+  gmail: {
+    clientId: process.env.GMAIL_CLIENT_ID || '',
+    clientSecret: process.env.GMAIL_CLIENT_SECRET || '',
+    redirectUri: process.env.GMAIL_REDIRECT_URI || 'http://localhost:3000/auth/gmail/callback',
+  },
 };

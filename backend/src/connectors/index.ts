@@ -3,6 +3,8 @@ import delay from './delay';
 import webhook from './webhook';
 import discord from './discord';
 import telegram from './telegram';
+import notion from './notion';
+import gmail from './gmail';
 
 // Signature commune à toutes les actions de connecteur
 export type ConnectorAction = (
@@ -21,4 +23,6 @@ export const connectors: ConnectorRegistry = {
   webhook,
   discord,
   telegram,
+  notion,
+  gmail,
 };
