@@ -1,57 +1,13 @@
-import { useState, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Zap } from 'lucide-react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import api, { setAccessToken } from '@/api/client';
-
-// Sphère 3D abstraite — lumière radiale qui donne du volume sans image externe
-function AbstractOrb() {
-  return (
-    <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-md opacity-90">
-      <defs>
-        <radialGradient id="orb-main" cx="38%" cy="32%" r="55%" gradientUnits="objectBoundingBox">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
-          <stop offset="60%" stopColor="#ffffff" stopOpacity="0.04" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="orb-glow" cx="50%" cy="50%" r="50%" gradientUnits="objectBoundingBox">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.06" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="orb-highlight" cx="35%" cy="28%" r="25%" gradientUnits="objectBoundingBox">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-        </radialGradient>
-        <filter id="blur-soft">
-          <feGaussianBlur stdDeviation="8" />
-        </filter>
-      </defs>
-
-      {/* Halo extérieur diffus */}
-      <circle cx="250" cy="250" r="220" fill="url(#orb-glow)" filter="url(#blur-soft)" />
-
-      {/* Corps principal de la sphère */}
-      <circle cx="250" cy="250" r="190" fill="url(#orb-main)" />
-
-      {/* Bordure fine lumineuse */}
-      <circle cx="250" cy="250" r="190" stroke="white" strokeOpacity="0.08" strokeWidth="1" fill="none" />
-
-      {/* Reflet principal — simule la lumière venant du haut gauche */}
-      <ellipse cx="185" cy="165" rx="75" ry="55" fill="url(#orb-highlight)" />
-
-      {/* Petit éclat de lumière vif */}
-      <ellipse cx="168" cy="148" rx="22" ry="14" fill="white" fillOpacity="0.22" />
-
-      {/* Ombre interne en bas — donne la courbure */}
-      <ellipse cx="295" cy="340" rx="110" ry="70" fill="black" fillOpacity="0.18" filter="url(#blur-soft)" />
-
-      {/* Anneau décoratif externe */}
-      <circle cx="250" cy="250" r="230" stroke="white" strokeOpacity="0.04" strokeWidth="1" fill="none" strokeDasharray="4 8" />
-    </svg>
-  );
-}
+import animationUrl from '@/assets/animation.lottie';
 
 export function Login() {
   const { t } = useTranslation();
@@ -89,14 +45,19 @@ export function Login() {
         {/* Logo */}
         <div className="flex items-center gap-2.5 z-10 relative">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white">
-            <Zap className="h-4.5 w-4.5 text-black" strokeWidth={2.5} />
+            <Zap className="h-4 w-4 text-black" strokeWidth={2.5} />
           </div>
           <span className="text-white text-lg font-semibold tracking-tight">AutoFlow</span>
         </div>
 
-        {/* Orbe centré */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <AbstractOrb />
+        {/* Animation Lottie centrée */}
+        <div className="absolute inset-0 flex items-center justify-center px-12">
+          <DotLottieReact
+            src={animationUrl}
+            loop
+            autoplay
+            className="w-full max-w-lg"
+          />
         </div>
 
         {/* Tagline en bas */}
