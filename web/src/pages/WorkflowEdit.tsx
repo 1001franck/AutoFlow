@@ -20,6 +20,7 @@ import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import api from '@/api/client';
+import { useToast } from '@/components/ui/Toast';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -352,12 +353,15 @@ export function WorkflowEdit() {
       })),
   });
 
+  const toast = useToast();
+
   const save = useMutation({
     mutationFn: () =>
       isNew
         ? api.post('/workflows', buildPayload())
         : api.put(`/workflows/${id}`, buildPayload()),
-    onSuccess: () => navigate('/workflows'),
+    onSuccess: () => { toast('Workflow sauvegardé', 'success'); navigate('/workflows'); },
+    onError: () => toast('Erreur lors de la sauvegarde', 'error'),
   });
 
   return (

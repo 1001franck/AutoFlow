@@ -12,6 +12,11 @@ export function setAccessToken(token: string | null) {
   accessToken = token;
 }
 
+// Permet à d'autres modules (ex: useSocket) de lire le token sans l'exposer globalement
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
 // Injecte l'access token dans chaque requête sortante
 api.interceptors.request.use((config) => {
   if (accessToken) {
