@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import { User, Lock, Palette, Globe } from 'lucide-react';
@@ -33,7 +32,7 @@ export function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwdLoading, setPwdLoading] = useState(false);
 
-  const handleChangePassword = async (e: FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
       toast('Les mots de passe ne correspondent pas', 'error');
@@ -69,7 +68,7 @@ export function Settings() {
         <p className="text-sm text-(--color-muted-foreground) mt-1">Gérez votre compte et vos préférences.</p>
       </div>
 
-      <div className="flex flex-col gap-5 max-w-xl">
+      <div className="flex flex-col gap-5 max-w-xl mx-auto">
 
         {/* Profil */}
         <Section title="Profil" icon={User}>
