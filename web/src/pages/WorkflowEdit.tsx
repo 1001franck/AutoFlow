@@ -42,7 +42,8 @@ interface WorkflowDetail {
   name: string;
   triggerType: string;
   triggerConfig: Record<string, string>;
-  steps: { id: string; name: string; type: string; config: Record<string, string>; order: number }[];
+  // La BDD stocke connector + action séparément et position au lieu de order
+  steps: { id: string; connector: string; action: string; config: Record<string, string>; position: number; credentialId: string | null }[];
 }
 
 interface Credential {
@@ -137,13 +138,20 @@ function workflowToGraph(wf: WorkflowDetail): { nodes: Node[]; edges: Edge[] } {
       data: { label: TRIGGER_TYPES.find((t) => t.type === wf.triggerType)?.label ?? wf.triggerType, type: wf.triggerType, config: wf.triggerConfig },
       style: TRIGGER_STYLE,
     },
-    ...wf.steps.map((s, i) => ({
-      id: s.id,
-      type: 'default' as const,
-      position: { x: 250, y: 160 + i * 120 },
-      data: { label: s.name, type: s.type, config: s.config },
-      style: NODE_STYLE,
-    })),
+    ...wf.steps.map((s, i) => {
+      // Reconstruit le type composite (ex: 'discord.send_message') depuis connector + action
+      const type = `${s.connector}.${s.action}`;
+      const label = ACTION_TYPES.find((a) => a.type === type)?.label ?? type;
+      // Réinjecte credentialId dans le config pour que le panneau de config l'affiche
+      const config = s.credentialId ? { ...s.config, credentialId: s.credentialId } : s.config;
+      return {
+        id: s.id,
+        type: 'default' as const,
+        position: { x: 250, y: 160 + i * 120 },
+        data: { label, type, config },
+        style: NODE_STYLE,
+      };
+    }),
   ];
   const ids = ['trigger', ...wf.steps.map((s) => s.id)];
   const edges: Edge[] = ids.slice(0, -1).map((src, i) => ({

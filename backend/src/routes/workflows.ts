@@ -6,6 +6,28 @@ import { generateWebhookToken } from '../utils/crypto';
 import { workflowQueue } from '../engine/queue';
 import { registerCronJob, unregisterCronJob } from '../engine/cron';
 
+interface RawStep {
+  type: string;           // ex: 'discord.send_message'
+  order: number;
+  config: Record<string, string>;
+}
+
+// Transforme le format frontend (type + order) vers le format BDD (connector + action + position)
+// Extrait aussi credentialId depuis le config pour le placer au bon niveau
+function normalizeSteps(steps: RawStep[]) {
+  return steps.map(({ type, order, config }) => {
+    const [connector, action] = type.split('.');
+    const { credentialId, ...restConfig } = config ?? {};
+    return {
+      position: order,
+      connector: connector ?? '',
+      action: action ?? '',
+      config: restConfig,
+      credentialId: credentialId || null,
+    };
+  });
+}
+
 const router = Router();
 router.use(requireAuth);
 
@@ -15,7 +37,7 @@ router.get('/', async (req, res: Response) => {
 
   const workflows = await prisma.workflow.findMany({
     where: { userId },
-    include: { _count: { select: { runs: true } } },
+    include: { _count: { select: { runs: true, steps: true } } },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -44,7 +66,7 @@ router.post('/', async (req, res: Response) => {
       triggerConfig,
       webhookToken,
       steps: steps
-        ? { create: steps }
+        ? { create: normalizeSteps(steps) }
         : undefined,
     },
     include: { steps: { orderBy: { position: 'asc' } } },
@@ -98,7 +120,7 @@ router.put('/:id', async (req, res: Response) => {
       version: { increment: 1 },
       // Remplace tous les steps existants par les nouveaux
       steps: steps
-        ? { deleteMany: {}, create: steps }
+        ? { deleteMany: {}, create: normalizeSteps(steps) }
         : undefined,
     },
     include: { steps: { orderBy: { position: 'asc' } } },
@@ -130,8 +152,8 @@ router.delete('/:id', async (req, res: Response) => {
   res.status(204).send();
 });
 
-// PUT /workflows/:id/toggle — active ou désactive un workflow
-router.put('/:id/toggle', async (req, res: Response) => {
+// PATCH /workflows/:id/toggle — active ou désactive un workflow
+router.patch('/:id/toggle', async (req, res: Response) => {
   const userId = (req as unknown as AuthRequest).userId;
   const id = req.params['id'] as string;
 

@@ -1,11 +1,13 @@
 import { Client } from '@notionhq/client';
 import { ConnectorAction } from './index';
+import { decrypt } from '../utils/crypto';
 
 // Crée une page dans une base de données Notion
 const create_page: ConnectorAction = async (params, credential) => {
   if (!credential) throw new Error('notion.create_page : credential manquant');
 
-  const { apiKey } = JSON.parse(credential.data) as { apiKey: string };
+  // Les données sont chiffrées en BDD — on déchiffre avant usage
+  const { apiKey } = decrypt<{ apiKey: string }>(credential.data);
   const databaseId = params['databaseId'] as string;
   const properties = params['properties'] as Record<string, unknown>;
 

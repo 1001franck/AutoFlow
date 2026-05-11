@@ -1,10 +1,12 @@
 import { ConnectorAction } from './index';
+import { decrypt } from '../utils/crypto';
 
 // Envoie un message via un bot Telegram
 const send_message: ConnectorAction = async (params, credential) => {
   if (!credential) throw new Error('telegram.send_message : credential manquant');
 
-  const { botToken } = JSON.parse(credential.data) as { botToken: string };
+  // Les données sont chiffrées en BDD — on déchiffre avant usage
+  const { botToken } = decrypt<{ botToken: string }>(credential.data);
   const chatId = params['chatId'] as string;
   const message = params['message'] as string;
   const parseMode = (params['parseMode'] as string) ?? 'Markdown';
