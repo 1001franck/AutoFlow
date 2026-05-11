@@ -4,6 +4,7 @@ import { Prisma } from '../generated/prisma/client';
 import { interpolate, ExecutionContext } from './interpolate';
 import { redisConnection, WorkflowJobData } from './queue';
 import { connectors } from '../connectors';
+import { emitToUser } from '../lib/socket';
 
 // Prisma 7 exige InputJsonValue pour les champs Json — ce cast évite la verbosité partout
 const toJson = (v: unknown) => v as unknown as Prisma.InputJsonValue;
@@ -103,12 +104,20 @@ async function processJob(job: Job<WorkflowJobData>) {
   }
 
   // Met à jour le run avec le statut final et la durée totale
-  await prisma.run.update({
+  const finishedRun = await prisma.run.update({
     where: { id: run.id },
     data: {
       status: globalStatus,
       finishedAt: new Date(),
       durationMs: Date.now() - startedAt,
     },
+  });
+
+  // Notifie le frontend en temps réel — le client écoute l'event 'run:update'
+  emitToUser(workflow.userId, 'run:update', {
+    runId: finishedRun.id,
+    workflowId,
+    status: globalStatus,
+    durationMs: finishedRun.durationMs,
   });
 }
