@@ -7,6 +7,7 @@ import { WorkflowEdit } from '@/pages/WorkflowEdit';
 import { Credentials } from '@/pages/Credentials';
 import { RunHistory } from '@/pages/RunHistory';
 import { RunDetail } from '@/pages/RunDetail';
+import { Runs } from '@/pages/Runs';
 
 // Garde de route — redirige vers /login si non authentifié
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/credentials" element={<PrivateRoute><Credentials /></PrivateRoute>} />
         <Route path="/workflows/new" element={<PrivateRoute><WorkflowEdit /></PrivateRoute>} />
         <Route path="/workflows/:id/edit" element={<PrivateRoute><WorkflowEdit /></PrivateRoute>} />
+        <Route path="/runs" element={<PrivateRoute><Runs /></PrivateRoute>} />
         <Route path="/workflows/:id/runs" element={<PrivateRoute><RunHistory /></PrivateRoute>} />
         <Route path="/runs/:runId" element={<PrivateRoute><RunDetail /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

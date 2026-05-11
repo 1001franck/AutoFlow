@@ -3,6 +3,7 @@
     "dashboard": "Dashboard",
     "workflows": "Workflows",
     "credentials": "Credentials",
+    "runs": "Runs",
     "settings": "Settings"
   },
   "auth": {

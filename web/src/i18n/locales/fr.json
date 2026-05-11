@@ -3,6 +3,7 @@
     "dashboard": "Tableau de bord",
     "workflows": "Workflows",
     "credentials": "Identifiants",
+    "runs": "Exécutions",
     "settings": "Paramètres"
   },
   "auth": {

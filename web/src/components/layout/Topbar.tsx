@@ -19,6 +19,8 @@ export function Topbar({ title }: { title: string }) {
   const handleLogout = async () => {
     await api.post('/auth/logout');
     setAccessToken(null);
+    // Supprime le flag localStorage pour que le garde de route redirige correctement
+    localStorage.removeItem('isAuth');
     navigate('/login');
   };
 
