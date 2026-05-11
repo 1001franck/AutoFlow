@@ -6,10 +6,13 @@ const router = Router();
 const REFRESH_COOKIE = 'refresh_token';
 
 // Cookie httpOnly : inaccessible depuis le JS client, protège contre le vol de token XSS
+const isProd = process.env.NODE_ENV === 'production';
+
+// En production : sameSite 'none' requis pour les requêtes cross-origin (Vercel → Render)
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  secure: isProd,
+  sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
