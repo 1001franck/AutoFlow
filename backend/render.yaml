@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: autoflow-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Exécute les migrations Prisma avant chaque déploiement
+    preDeployCommand: npx prisma migrate deploy
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        sync: false        # Je vais renseigner dans le dashboard Render (Supabase URL)
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: autoflow-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        sync: false        # 64 caractères hex — à générer et stocker manuellement
+      - key: FRONTEND_URL
+        sync: false        # URL Vercel ex: https://autoflow.vercel.app
+
+  - type: redis
+    name: autoflow-redis
+    plan: free
+    maxmemoryPolicy: noeviction

@@ -79,3 +79,13 @@ jobs:
         if: steps.check.outputs.exists == 'true'
         working-directory: web
         run: npm run lint
+
+  deploy:
+    name: Deploy — Render (backend)
+    runs-on: ubuntu-latest
+    # Ne se déclenche que sur push vers main, après que les checks passent
+    needs: [backend, web]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Trigger Render deploy hook
+        run: curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
