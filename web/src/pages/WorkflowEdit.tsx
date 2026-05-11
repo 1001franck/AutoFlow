@@ -12,10 +12,11 @@ import {
   type Connection,
   type Node,
   type Edge,
+  type NodeMouseHandler,
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import api from '@/api/client';
@@ -25,27 +26,31 @@ import api from '@/api/client';
 interface StepData {
   label: string;
   type: string;
-  config: Record<string, unknown>;
+  config: Record<string, string>;
 }
 
 interface WorkflowPayload {
   name: string;
-  description?: string;
   triggerType: string;
-  triggerConfig: Record<string, unknown>;
-  steps: { name: string; type: string; config: Record<string, unknown>; order: number }[];
+  triggerConfig: Record<string, string>;
+  steps: { name: string; type: string; config: Record<string, string>; order: number }[];
 }
 
 interface WorkflowDetail {
   id: string;
   name: string;
-  description: string | null;
   triggerType: string;
-  triggerConfig: Record<string, unknown>;
-  steps: { id: string; name: string; type: string; config: Record<string, unknown>; order: number }[];
+  triggerConfig: Record<string, string>;
+  steps: { id: string; name: string; type: string; config: Record<string, string>; order: number }[];
 }
 
-// ─── Catalogue des blocs disponibles ─────────────────────────────────────────
+interface Credential {
+  id: string;
+  label: string;
+  connector: string;
+}
+
+// ─── Catalogue ────────────────────────────────────────────────────────────────
 
 const TRIGGER_TYPES = [
   { type: 'webhook',    label: 'Webhook entrant' },
@@ -54,13 +59,56 @@ const TRIGGER_TYPES = [
 ];
 
 const ACTION_TYPES = [
-  { type: 'discord.send_message',  label: 'Discord — Envoyer message' },
-  { type: 'telegram.send_message', label: 'Telegram — Envoyer message' },
+  { type: 'discord.send_message',  label: 'Discord — Message' },
+  { type: 'telegram.send_message', label: 'Telegram — Message' },
   { type: 'gmail.send_email',      label: 'Gmail — Envoyer email' },
   { type: 'notion.create_page',    label: 'Notion — Créer page' },
   { type: 'webhook.http_post',     label: 'HTTP POST' },
   { type: 'delay.wait',            label: 'Délai' },
 ];
+
+// Champs de config par type d'action
+type FieldDef = { key: string; label: string; placeholder: string; credential?: string };
+
+const ACTION_FIELDS: Record<string, FieldDef[]> = {
+  'discord.send_message': [
+    { key: 'credentialId', label: 'Identifiant Discord', placeholder: '', credential: 'discord' },
+    { key: 'channelId',    label: 'Channel ID',          placeholder: '123456789' },
+    { key: 'message',      label: 'Message',             placeholder: 'Bonjour {{trigger.body.name}}' },
+  ],
+  'telegram.send_message': [
+    { key: 'credentialId', label: 'Identifiant Telegram', placeholder: '', credential: 'telegram' },
+    { key: 'chatId',       label: 'Chat ID',              placeholder: '-1001234567' },
+    { key: 'message',      label: 'Message',              placeholder: 'Bonjour {{trigger.body.name}}' },
+  ],
+  'gmail.send_email': [
+    { key: 'credentialId', label: 'Identifiant Gmail', placeholder: '', credential: 'gmail' },
+    { key: 'to',           label: 'Destinataire',      placeholder: 'user@example.com' },
+    { key: 'subject',      label: 'Sujet',             placeholder: 'Nouveau message de {{trigger.body.name}}' },
+    { key: 'body',         label: 'Corps',             placeholder: 'Contenu de l\'email…' },
+  ],
+  'notion.create_page': [
+    { key: 'credentialId', label: 'Identifiant Notion', placeholder: '', credential: 'notion' },
+    { key: 'databaseId',   label: 'Database ID',        placeholder: 'abc123...' },
+    { key: 'title',        label: 'Titre',              placeholder: '{{trigger.body.name}}' },
+  ],
+  'webhook.http_post': [
+    { key: 'url',    label: 'URL',    placeholder: 'https://example.com/webhook' },
+    { key: 'body',   label: 'Corps',  placeholder: '{"key": "{{trigger.body.value}}"}' },
+  ],
+  'delay.wait': [
+    { key: 'ms', label: 'Durée (ms)', placeholder: '1000' },
+  ],
+};
+
+const TRIGGER_FIELDS: Record<string, FieldDef[]> = {
+  cron:       [{ key: 'expression', label: 'Expression cron', placeholder: '0 9 * * 1-5' }],
+  gmail_poll: [
+    { key: 'credentialId', label: 'Identifiant Gmail', placeholder: '', credential: 'gmail' },
+    { key: 'label',        label: 'Label Gmail',       placeholder: 'INBOX' },
+  ],
+  webhook: [],
+};
 
 // ─── Styles des nœuds ─────────────────────────────────────────────────────────
 
@@ -71,44 +119,126 @@ const NODE_STYLE = {
   padding: '10px 16px',
   fontSize: '13px',
   color: 'var(--color-foreground)',
-  minWidth: 160,
+  minWidth: 180,
 };
 
-const TRIGGER_STYLE = {
-  ...NODE_STYLE,
-  borderColor: '#000',
-  fontWeight: 600,
-};
+const TRIGGER_STYLE = { ...NODE_STYLE, borderColor: 'var(--color-foreground)', fontWeight: 600 };
+const SELECTED_STYLE = { ...NODE_STYLE, borderColor: 'var(--color-foreground)', borderWidth: 2 };
 
-// ─── Conversion workflow ↔ nœuds RF ──────────────────────────────────────────
+// ─── Conversion workflow ↔ nœuds ──────────────────────────────────────────────
 
-function workflowToNodes(wf: WorkflowDetail): { nodes: Node[]; edges: Edge[] } {
+function workflowToGraph(wf: WorkflowDetail): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [
     {
       id: 'trigger',
       type: 'default',
       position: { x: 250, y: 40 },
-      data: { label: TRIGGER_TYPES.find((t) => t.type === wf.triggerType)?.label ?? wf.triggerType },
+      data: { label: TRIGGER_TYPES.find((t) => t.type === wf.triggerType)?.label ?? wf.triggerType, type: wf.triggerType, config: wf.triggerConfig },
       style: TRIGGER_STYLE,
     },
     ...wf.steps.map((s, i) => ({
       id: s.id,
       type: 'default' as const,
       position: { x: 250, y: 160 + i * 120 },
-      data: { label: s.name } as StepData & { label: string },
+      data: { label: s.name, type: s.type, config: s.config },
       style: NODE_STYLE,
     })),
   ];
-
   const ids = ['trigger', ...wf.steps.map((s) => s.id)];
-  const edges: Edge[] = ids.slice(0, -1).map((id, i) => ({
-    id: `e-${i}`,
-    source: id,
-    target: ids[i + 1],
+  const edges: Edge[] = ids.slice(0, -1).map((src, i) => ({
+    id: `e-${i}`, source: src, target: ids[i + 1],
     style: { stroke: 'var(--color-border)' },
   }));
-
   return { nodes, edges };
+}
+
+// ─── Panneau de configuration d'un nœud ───────────────────────────────────────
+
+function ConfigPanel({
+  node,
+  credentials,
+  triggerConfig,
+  onTriggerConfig,
+  onUpdateNode,
+  onClose,
+}: {
+  node: Node;
+  credentials: Credential[];
+  triggerConfig: Record<string, string>;
+  onTriggerConfig: (cfg: Record<string, string>) => void;
+  onUpdateNode: (id: string, patch: Partial<StepData>) => void;
+  onClose: () => void;
+}) {
+  const isTrigger = node.id === 'trigger';
+  const nodeType = String(node.data.type ?? '');
+  const fields = isTrigger
+    ? (TRIGGER_FIELDS[nodeType] ?? [])
+    : (ACTION_FIELDS[nodeType] ?? []);
+
+  const config = isTrigger ? triggerConfig : ((node.data.config as Record<string, string>) ?? {});
+  const setField = (key: string, value: string) => {
+    if (isTrigger) {
+      onTriggerConfig({ ...config, [key]: value });
+    } else {
+      onUpdateNode(node.id, { config: { ...config, [key]: value } });
+    }
+  };
+
+  return (
+    <aside className="w-64 shrink-0 border-l border-(--color-border) bg-(--color-background) overflow-y-auto flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-(--color-border)">
+        <p className="text-xs font-semibold truncate">{String(node.data.label)}</p>
+        <button onClick={onClose} className="text-(--color-muted-foreground) hover:text-(--color-foreground)">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-4 p-4">
+        {/* Nom du nœud (sauf trigger) */}
+        {!isTrigger && (
+          <Input
+            id="node-label"
+            label="Nom de l'étape"
+            value={String(node.data.label)}
+            onChange={(e) => onUpdateNode(node.id, { label: e.target.value })}
+          />
+        )}
+
+        {fields.length === 0 && (
+          <p className="text-xs text-(--color-muted-foreground)">Aucune configuration requise.</p>
+        )}
+
+        {fields.map((f) =>
+          f.credential ? (
+            <div key={f.key} className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium">{f.label}</label>
+              <select
+                value={config[f.key] ?? ''}
+                onChange={(e) => setField(f.key, e.target.value)}
+                className="h-10 w-full rounded-lg border border-(--color-border) bg-(--color-background) px-3 text-sm text-(--color-foreground) outline-none focus:border-(--color-foreground) transition-colors"
+              >
+                <option value="">— Choisir —</option>
+                {credentials
+                  .filter((c) => c.connector === f.credential)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+              </select>
+            </div>
+          ) : (
+            <Input
+              key={f.key}
+              id={`node-${f.key}`}
+              label={f.label}
+              placeholder={f.placeholder}
+              value={config[f.key] ?? ''}
+              onChange={(e) => setField(f.key, e.target.value)}
+            />
+          )
+        )}
+      </div>
+    </aside>
+  );
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
@@ -120,10 +250,16 @@ export function WorkflowEdit() {
 
   const [name, setName] = useState('Nouveau workflow');
   const [triggerType, setTriggerType] = useState(TRIGGER_TYPES[0].type);
+  const [triggerConfig, setTriggerConfig] = useState<Record<string, string>>({});
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  // Chargement en mode édition
+  const { data: credentials = [] } = useQuery<Credential[]>({
+    queryKey: ['credentials'],
+    queryFn: () => api.get('/credentials').then((r) => r.data),
+  });
+
   const { data: existing } = useQuery<WorkflowDetail>({
     queryKey: ['workflow', id],
     queryFn: () => api.get(`/workflows/${id}`).then((r) => r.data),
@@ -134,77 +270,87 @@ export function WorkflowEdit() {
     if (existing) {
       setName(existing.name);
       setTriggerType(existing.triggerType);
-      const { nodes: n, edges: e } = workflowToNodes(existing);
+      setTriggerConfig(existing.triggerConfig);
+      const { nodes: n, edges: e } = workflowToGraph(existing);
       setNodes(n);
       setEdges(e);
     } else if (isNew) {
-      setNodes([
-        {
-          id: 'trigger',
-          type: 'default',
-          position: { x: 250, y: 40 },
-          data: { label: TRIGGER_TYPES[0].label },
-          style: TRIGGER_STYLE,
-        },
-      ]);
+      setNodes([{
+        id: 'trigger',
+        type: 'default',
+        position: { x: 250, y: 40 },
+        data: { label: TRIGGER_TYPES[0].label, type: TRIGGER_TYPES[0].type, config: {} },
+        style: TRIGGER_STYLE,
+      }]);
     }
   }, [existing, isNew, setNodes, setEdges]);
 
   const onConnect = useCallback(
-    (connection: Connection) =>
-      setEdges((eds) =>
-        addEdge({ ...connection, style: { stroke: 'var(--color-border)' } }, eds)
-      ),
+    (c: Connection) =>
+      setEdges((eds) => addEdge({ ...c, style: { stroke: 'var(--color-border)' } }, eds)),
     [setEdges]
   );
 
-  // Ajout d'une étape
-  const addStep = (type: string, label: string) => {
-    const id = `step-${Date.now()}`;
-    const y = nodes.length > 0
-      ? Math.max(...nodes.map((n) => n.position.y)) + 120
-      : 160;
-
-    const newNode: Node = {
-      id,
-      type: 'default',
-      position: { x: 250, y },
-      data: { label },
-      style: NODE_STYLE,
-    };
-
-    setNodes((nds) => [...nds, newNode]);
-
-    // Connecte automatiquement au dernier nœud
-    const lastId = nodes.at(-1)?.id;
-    if (lastId) {
-      setEdges((eds) => [
-        ...eds,
-        { id: `e-${lastId}-${id}`, source: lastId, target: id, style: { stroke: 'var(--color-border)' } },
-      ]);
-    }
-
-    // Met à jour le type de la step dans la data du nœud
+  const onNodeClick: NodeMouseHandler = useCallback((_evt, node) => {
+    setSelectedNode(node);
     setNodes((nds) =>
-      nds.map((n) => n.id === id ? { ...n, data: { ...n.data, type, config: {} } } : n)
+      nds.map((n) => ({
+        ...n,
+        style: n.id === node.id
+          ? (n.id === 'trigger' ? { ...TRIGGER_STYLE, borderWidth: 2 } : SELECTED_STYLE)
+          : (n.id === 'trigger' ? TRIGGER_STYLE : NODE_STYLE),
+      }))
+    );
+  }, [setNodes]);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNode(null);
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, style: n.id === 'trigger' ? TRIGGER_STYLE : NODE_STYLE }))
+    );
+  }, [setNodes]);
+
+  const updateNode = (nodeId: string, patch: Partial<StepData>) => {
+    setNodes((nds) =>
+      nds.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n)
+    );
+    setSelectedNode((prev) =>
+      prev?.id === nodeId ? { ...prev, data: { ...prev.data, ...patch } } : prev
     );
   };
 
-  // Sauvegarde
-  const buildPayload = (): WorkflowPayload => {
-    const stepNodes = nodes.filter((n) => n.id !== 'trigger');
-    return {
-      name,
-      triggerType,
-      triggerConfig: {},
-      steps: stepNodes.map((n, i) => ({
+  const addStep = (type: string, label: string) => {
+    const stepId = `step-${Date.now()}`;
+    const y = nodes.length > 0 ? Math.max(...nodes.map((n) => n.position.y)) + 120 : 160;
+    const newNode: Node = {
+      id: stepId, type: 'default',
+      position: { x: 250, y },
+      data: { label, type, config: {} },
+      style: NODE_STYLE,
+    };
+    const lastId = nodes.at(-1)?.id;
+    setNodes((nds) => [...nds, newNode]);
+    if (lastId) {
+      setEdges((eds) => [
+        ...eds,
+        { id: `e-${lastId}-${stepId}`, source: lastId, target: stepId, style: { stroke: 'var(--color-border)' } },
+      ]);
+    }
+  };
+
+  const buildPayload = (): WorkflowPayload => ({
+    name,
+    triggerType,
+    triggerConfig,
+    steps: nodes
+      .filter((n) => n.id !== 'trigger')
+      .map((n, i) => ({
         name: String(n.data.label),
-        type: String((n.data as StepData).type ?? ''),
-        config: (n.data as StepData).config ?? {},
+        type: String(n.data.type ?? ''),
+        config: (n.data.config as Record<string, string>) ?? {},
         order: i,
       })),
-    };
-  };
+  });
 
   const save = useMutation({
     mutationFn: () =>
@@ -234,10 +380,16 @@ export function WorkflowEdit() {
           <select
             value={triggerType}
             onChange={(e) => {
-              setTriggerType(e.target.value);
-              const label = TRIGGER_TYPES.find((t) => t.type === e.target.value)?.label ?? e.target.value;
+              const t = e.target.value;
+              setTriggerType(t);
+              setTriggerConfig({});
+              const label = TRIGGER_TYPES.find((x) => x.type === t)?.label ?? t;
               setNodes((nds) =>
-                nds.map((n) => n.id === 'trigger' ? { ...n, data: { label }, style: TRIGGER_STYLE } : n)
+                nds.map((n) =>
+                  n.id === 'trigger'
+                    ? { ...n, data: { ...n.data, label, type: t, config: {} }, style: TRIGGER_STYLE }
+                    : n
+                )
               );
             }}
             className="h-8 rounded-lg border border-(--color-border) bg-(--color-background) px-3 text-xs text-(--color-foreground) outline-none"
@@ -247,12 +399,7 @@ export function WorkflowEdit() {
             ))}
           </select>
 
-          <Button
-            size="sm"
-            disabled={save.isPending}
-            onClick={() => save.mutate()}
-            className="gap-1.5"
-          >
+          <Button size="sm" disabled={save.isPending} onClick={() => save.mutate()} className="gap-1.5">
             <Save className="h-3.5 w-3.5" />
             {save.isPending ? 'Sauvegarde…' : 'Sauvegarder'}
           </Button>
@@ -260,8 +407,8 @@ export function WorkflowEdit() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Panneau gauche — catalogue d'actions */}
-        <aside className="w-56 shrink-0 border-r border-(--color-border) bg-(--color-background) overflow-y-auto">
+        {/* Panneau gauche — catalogue */}
+        <aside className="w-52 shrink-0 border-r border-(--color-border) bg-(--color-background) overflow-y-auto">
           <p className="px-4 py-3 text-xs font-semibold text-(--color-muted-foreground) uppercase tracking-wide">
             Actions
           </p>
@@ -277,7 +424,7 @@ export function WorkflowEdit() {
           ))}
         </aside>
 
-        {/* Canvas React Flow */}
+        {/* Canvas */}
         <div className="flex-1">
           <ReactFlow
             nodes={nodes}
@@ -285,16 +432,13 @@ export function WorkflowEdit() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
             fitView
             fitViewOptions={{ padding: 0.3 }}
             deleteKeyCode="Delete"
           >
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={20}
-              size={1}
-              color="var(--color-border)"
-            />
+            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--color-border)" />
             <Controls showInteractive={false} />
             <MiniMap
               nodeColor="var(--color-muted)"
@@ -303,6 +447,23 @@ export function WorkflowEdit() {
             />
           </ReactFlow>
         </div>
+
+        {/* Panneau droit — config du nœud sélectionné */}
+        {selectedNode && (
+          <ConfigPanel
+            node={selectedNode}
+            credentials={credentials}
+            triggerConfig={triggerConfig}
+            onTriggerConfig={setTriggerConfig}
+            onUpdateNode={updateNode}
+            onClose={() => {
+              setSelectedNode(null);
+              setNodes((nds) =>
+                nds.map((n) => ({ ...n, style: n.id === 'trigger' ? TRIGGER_STYLE : NODE_STYLE }))
+              );
+            }}
+          />
+        )}
       </div>
     </div>
   );
