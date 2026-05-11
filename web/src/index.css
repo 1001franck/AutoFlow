@@ -40,3 +40,54 @@ body {
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
 }
+
+/* ── React Flow — surcharge thème ────────────────────────────────────────── */
+.react-flow__renderer {
+  background: var(--color-background);
+}
+
+.react-flow__controls {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.react-flow__controls-button {
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-foreground);
+  fill: var(--color-foreground);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--color-muted);
+}
+
+.react-flow__minimap {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.react-flow__edge-path {
+  stroke: var(--color-border);
+}
+
+.react-flow__connection-line {
+  stroke: var(--color-foreground);
+}
+
+.react-flow__handle {
+  background: var(--color-border);
+  border: 2px solid var(--color-background);
+  width: 8px;
+  height: 8px;
+}
+
+.react-flow__handle:hover {
+  background: var(--color-foreground);
+}
+
+.react-flow__attribution {
+  display: none;
+}
