@@ -9,12 +9,16 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^7.8.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"
   },
@@ -25,6 +29,7 @@
     "@typescript-eslint/parser": "^8.59.2",
     "eslint": "^10.3.0",
     "nodemon": "^3.1.14",
+    "prisma": "^7.8.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
