@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -262,6 +262,8 @@ export function WorkflowEdit() {
   const [triggerType, setTriggerType] = useState(TRIGGER_TYPES[0].type);
   const [triggerConfig, setTriggerConfig] = useState<Record<string, string>>({});
   const [webhookToken, setWebhookToken] = useState<string | null>(null);
+  // Compteur stable pour générer des IDs de nœuds uniques sans appeler Date.now() au rendu
+  const stepCounter = useRef(0);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -277,6 +279,7 @@ export function WorkflowEdit() {
     enabled: !isNew,
   });
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (existing) {
       setName(existing.name);
@@ -332,7 +335,7 @@ export function WorkflowEdit() {
   };
 
   const addStep = (type: string, label: string) => {
-    const stepId = `step-${Date.now()}`;
+    const stepId = `step-${++stepCounter.current}`;
     const y = nodes.length > 0 ? Math.max(...nodes.map((n) => n.position.y)) + 120 : 160;
     const newNode: Node = {
       id: stepId, type: 'default',

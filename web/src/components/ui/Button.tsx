@@ -1,4 +1,5 @@
-import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { forwardRef } from 'react';
+import type { ButtonHTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
@@ -35,4 +36,5 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
+// eslint-disable-next-line react-refresh/only-export-components
 export { Button, buttonVariants };

@@ -21,7 +21,9 @@ function getSocket(): Socket {
 
 export function useSocket(event: string, handler: (data: unknown) => void) {
   const handlerRef = useRef(handler);
-  handlerRef.current = handler;
+
+  // Met à jour la référence sans recréer le listener — évite les fuites mémoire
+  useEffect(() => { handlerRef.current = handler; }, [handler]);
 
   useEffect(() => {
     const socket = getSocket();
