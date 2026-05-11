@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { config } from './config';
 import { initSocket } from './lib/socket';
+import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
 import webhookRoutes from './routes/webhook';
 import workflowRoutes from './routes/workflows';
@@ -16,7 +17,10 @@ import { startScheduler } from './engine/cron';
 const app = express();
 const httpServer = http.createServer(app);
 
-app.use(cors({ origin: config.cors.frontendUrl, credentials: true }));
+app.use(cors({
+  origin: config.cors.frontendUrl,
+  credentials: true, // autorise l'envoi des cookies (refresh_token)
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -32,6 +36,9 @@ app.use('/dashboard', dashboardRoutes);
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Doit être déclaré après toutes les routes — Express le reconnaît comme handler d'erreur via ses 4 paramètres
+app.use(errorHandler);
 
 // Initialise Socket.io sur le même serveur HTTP qu'Express
 initSocket(httpServer);
