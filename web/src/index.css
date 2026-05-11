@@ -37,10 +37,10 @@
   border-color: var(--color-border);
 }
 
-/* Scrollbar invisible par défaut, apparaît au survol/scroll */
+/* Scrollbar fine et discrète — visible uniquement au survol du conteneur scrollable */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
@@ -50,11 +50,14 @@
 ::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 9999px;
-  transition: background 0.2s;
 }
 
-*:hover::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--color-muted-foreground) 30%, transparent);
+/* Apparaît seulement quand on survole le conteneur scrollable lui-même */
+.overflow-y-auto:hover::-webkit-scrollbar-thumb,
+.overflow-x-auto:hover::-webkit-scrollbar-thumb,
+aside:hover::-webkit-scrollbar-thumb,
+main:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-muted-foreground) 25%, transparent);
 }
 
 /* Firefox */
@@ -63,8 +66,11 @@
   scrollbar-color: transparent transparent;
 }
 
-*:hover {
-  scrollbar-color: color-mix(in srgb, var(--color-muted-foreground) 30%, transparent) transparent;
+.overflow-y-auto:hover,
+.overflow-x-auto:hover,
+aside:hover,
+main:hover {
+  scrollbar-color: color-mix(in srgb, var(--color-muted-foreground) 25%, transparent) transparent;
 }
 
 body {
