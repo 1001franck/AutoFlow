@@ -54,7 +54,7 @@ export function Topbar({ title }: { title: string }) {
           className="flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
         >
           <Globe className="h-4 w-4" />
-          {i18n.language === 'fr' ? 'EN' : 'FR'}
+          {i18n.language === 'fr' ? 'FR' : 'EN'}
         </button>
 
         {/* Toggle thème */}
