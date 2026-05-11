@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Sun, Moon, LogOut, Globe } from 'lucide-react';
 import api, { setAccessToken } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +8,9 @@ export function Topbar({ title }: { title: string }) {
   const { i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+
+  const email = localStorage.getItem('userEmail') ?? '';
+  const displayName = email.split('@')[0] ?? 'vous';
 
   const toggleLang = () => {
     const next = i18n.language === 'fr' ? 'en' : 'fr';
@@ -19,31 +21,51 @@ export function Topbar({ title }: { title: string }) {
   const handleLogout = async () => {
     await api.post('/auth/logout');
     setAccessToken(null);
-    // Supprime le flag localStorage pour que le garde de route redirige correctement
     localStorage.removeItem('isAuth');
+    localStorage.removeItem('userEmail');
     navigate('/login');
   };
 
   return (
-    <header className="h-16 flex items-center justify-between px-8 border-b border-(--color-border) bg-(--color-background)">
-      <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
-
-      <div className="flex items-center gap-2">
-        {/* Toggle langue FR / EN */}
-        <Button variant="ghost" size="sm" onClick={toggleLang} className="text-xs font-semibold w-10">
-          {i18n.language === 'fr' ? 'EN' : 'FR'}
-        </Button>
-
-        {/* Toggle dark / light */}
-        <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
-
-        {/* Déconnexion */}
-        <Button variant="ghost" size="icon" onClick={handleLogout}>
-          <LogOut className="h-4 w-4" />
-        </Button>
+    <header className="h-14 flex items-center justify-between px-8 bg-(--color-foreground)">
+      {/* Gauche — salutation */}
+      <div className="flex items-center gap-3">
+        <p className="text-sm font-semibold text-(--color-background)">
+          Bienvenue,{' '}
+          <span className="font-bold">{displayName}</span>
+        </p>
+        <span className="text-(--color-background) opacity-20 select-none">·</span>
+        <p className="text-xs text-(--color-background) opacity-50">{title}</p>
       </div>
+
+      {/* Droite — actions style Uber */}
+      <nav className="flex items-center gap-6">
+        <button
+          onClick={toggleLang}
+          className="flex items-center gap-1.5 text-xs font-medium text-(--color-background) opacity-70 hover:opacity-100 transition-opacity"
+        >
+          <Globe className="h-3.5 w-3.5" />
+          {i18n.language === 'fr' ? 'EN' : 'FR'}
+        </button>
+
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex items-center gap-1.5 text-xs font-medium text-(--color-background) opacity-70 hover:opacity-100 transition-opacity"
+        >
+          {theme === 'dark'
+            ? <><Sun className="h-3.5 w-3.5" /> Clair</>
+            : <><Moon className="h-3.5 w-3.5" /> Sombre</>
+          }
+        </button>
+
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 text-xs font-medium text-(--color-background) opacity-70 hover:opacity-100 transition-opacity"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          Déconnexion
+        </button>
+      </nav>
     </header>
   );
 }

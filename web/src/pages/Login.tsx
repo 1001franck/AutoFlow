@@ -30,6 +30,7 @@ export function Login() {
       const { data } = await api.post(endpoint, { email, password });
       setAccessToken(data.accessToken);
       localStorage.setItem('isAuth', '1');
+      localStorage.setItem('userEmail', email);
       navigate('/dashboard');
     } catch {
       setError(mode === 'login' ? 'Identifiants incorrects' : 'Erreur lors de la création du compte');
