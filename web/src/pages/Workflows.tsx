@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Plus, Zap } from 'lucide-react';
+import { Plus, Zap, Play, Copy, Trash2, Power, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
@@ -87,6 +87,29 @@ function WorkflowList({ workflows }: { workflows: Workflow[] }) {
 
 function WorkflowRow({ workflow }: { workflow: Workflow }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['workflows'] });
+
+  const toggle = useMutation({
+    mutationFn: () => api.patch(`/workflows/${workflow.id}/toggle`),
+    onSuccess: invalidate,
+  });
+
+  const run = useMutation({
+    mutationFn: () => api.post(`/workflows/${workflow.id}/run`),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: () => api.post(`/workflows/${workflow.id}/duplicate`),
+    onSuccess: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: () => api.delete(`/workflows/${workflow.id}`),
+    onSuccess: invalidate,
+  });
 
   return (
     <div className="flex items-center justify-between px-6 py-4 gap-4">
@@ -103,10 +126,67 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
         </div>
       </div>
 
-      {/* Badge statut */}
-      <Badge variant={workflow.active ? 'success' : 'default'} className="shrink-0">
-        {workflow.active ? t('workflow.active') : t('workflow.inactive')}
-      </Badge>
+      {/* Droite : badge + actions */}
+      <div className="flex items-center gap-2 shrink-0">
+        <Badge variant={workflow.active ? 'success' : 'default'}>
+          {workflow.active ? t('workflow.active') : t('workflow.inactive')}
+        </Badge>
+
+        {/* Toggle actif */}
+        <Button
+          variant="ghost"
+          size="icon"
+          title={workflow.active ? t('workflow.deactivate') : t('workflow.activate')}
+          disabled={toggle.isPending}
+          onClick={() => toggle.mutate()}
+        >
+          <Power className="h-4 w-4" />
+        </Button>
+
+        {/* Exécuter */}
+        <Button
+          variant="ghost"
+          size="icon"
+          title={t('workflow.run')}
+          disabled={run.isPending}
+          onClick={() => run.mutate()}
+        >
+          <Play className="h-4 w-4" />
+        </Button>
+
+        {/* Historique */}
+        <Button
+          variant="ghost"
+          size="icon"
+          title={t('run.title')}
+          onClick={() => navigate(`/workflows/${workflow.id}/runs`)}
+        >
+          <History className="h-4 w-4" />
+        </Button>
+
+        {/* Dupliquer */}
+        <Button
+          variant="ghost"
+          size="icon"
+          title={t('workflow.duplicate')}
+          disabled={duplicate.isPending}
+          onClick={() => duplicate.mutate()}
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+
+        {/* Supprimer */}
+        <Button
+          variant="ghost"
+          size="icon"
+          title={t('workflow.delete')}
+          disabled={remove.isPending}
+          onClick={() => { if (confirm(workflow.name + ' ?')) remove.mutate(); }}
+          className="text-(--color-destructive) hover:text-(--color-destructive)"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
