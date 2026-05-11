@@ -1,4 +1,6 @@
 import { Credential } from '../generated/prisma/client';
+import delay from './delay';
+import webhook from './webhook';
 
 // Signature commune à toutes les actions de connecteur
 export type ConnectorAction = (
@@ -12,6 +14,7 @@ export interface ConnectorRegistry {
   };
 }
 
-// Les connecteurs sont implémentés au Sprint 2
-// Le registry est vide pour l'instant — le worker gère le cas "connecteur inconnu"
-export const connectors: ConnectorRegistry = {};
+export const connectors: ConnectorRegistry = {
+  delay,
+  webhook,
+};
