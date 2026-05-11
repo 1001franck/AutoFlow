@@ -4,6 +4,7 @@ import { config } from './config';
 import authRoutes from './routes/auth';
 import webhookRoutes from './routes/webhook';
 import { startWorker } from './engine/worker';
+import { startScheduler } from './engine/cron';
 
 const app = express();
 
@@ -19,8 +20,9 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Démarre le worker BullMQ dans le même process en développement
+// Démarre le worker BullMQ et le scheduleur cron dans le même process
 startWorker();
+startScheduler();
 
 app.listen(config.port, () => {
   console.log(`Serveur démarré sur le port ${config.port}`);

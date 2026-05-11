@@ -30,6 +30,7 @@
     "express": "^5.2.1",
     "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
     "pg": "^8.20.0"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.6.2",
+    "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.20.0",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
