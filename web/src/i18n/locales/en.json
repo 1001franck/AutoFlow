@@ -67,6 +67,25 @@
     "delete": "Delete",
     "noCredentials": "No credentials saved"
   },
+  "settings": {
+    "subtitle": "Manage your account and preferences.",
+    "profile": "Profile",
+    "security": "Security",
+    "appearance": "Appearance",
+    "language": "Language",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "updatePassword": "Update",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordUpdated": "Password updated",
+    "passwordIncorrect": "Current password is incorrect"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

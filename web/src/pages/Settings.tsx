@@ -35,22 +35,22 @@ export function Settings() {
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast('Les mots de passe ne correspondent pas', 'error');
+      toast(t('settings.passwordMismatch'), 'error');
       return;
     }
     if (newPassword.length < 8) {
-      toast('Le mot de passe doit contenir au moins 8 caractères', 'error');
+      toast(t('settings.passwordTooShort'), 'error');
       return;
     }
     setPwdLoading(true);
     try {
       await api.patch('/auth/password', { currentPassword, newPassword });
-      toast('Mot de passe mis à jour', 'success');
+      toast(t('settings.passwordUpdated'), 'success');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch {
-      toast('Mot de passe actuel incorrect', 'error');
+      toast(t('settings.passwordIncorrect'), 'error');
     } finally {
       setPwdLoading(false);
     }
@@ -65,13 +65,13 @@ export function Settings() {
     <Layout title={t('nav.settings')}>
       <div className="mb-8">
         <h2 className="text-2xl font-semibold tracking-tight">{t('nav.settings')}</h2>
-        <p className="text-sm text-(--color-muted-foreground) mt-1">Gérez votre compte et vos préférences.</p>
+        <p className="text-sm text-(--color-muted-foreground) mt-1">{t('settings.subtitle')}</p>
       </div>
 
       <div className="flex flex-col gap-5 max-w-xl mx-auto">
 
         {/* Profil */}
-        <Section title="Profil" icon={User}>
+        <Section title={t('settings.profile')} icon={User}>
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--color-muted) text-lg font-semibold text-(--color-foreground) shrink-0">
               {email.charAt(0).toUpperCase()}
@@ -84,12 +84,12 @@ export function Settings() {
         </Section>
 
         {/* Sécurité */}
-        <Section title="Sécurité" icon={Lock}>
+        <Section title={t('settings.security')} icon={Lock}>
           <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
             <Input
               id="current-password"
               type="password"
-              label="Mot de passe actuel"
+              label={t('settings.currentPassword')}
               placeholder="••••••••"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -98,7 +98,7 @@ export function Settings() {
             <Input
               id="new-password"
               type="password"
-              label="Nouveau mot de passe"
+              label={t('settings.newPassword')}
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -107,7 +107,7 @@ export function Settings() {
             <Input
               id="confirm-password"
               type="password"
-              label="Confirmer le mot de passe"
+              label={t('settings.confirmPassword')}
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -115,28 +115,28 @@ export function Settings() {
             />
             <div className="pt-1">
               <Button type="submit" size="sm" disabled={pwdLoading}>
-                {pwdLoading ? t('common.loading') : 'Mettre à jour'}
+                {pwdLoading ? t('common.loading') : t('settings.updatePassword')}
               </Button>
             </div>
           </form>
         </Section>
 
         {/* Apparence */}
-        <Section title="Apparence" icon={Palette}>
+        <Section title={t('settings.appearance')} icon={Palette}>
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-(--color-muted-foreground)">Thème</p>
+            <p className="text-sm text-(--color-muted-foreground)">{t('settings.theme')}</p>
             <div className="flex gap-2">
-              {(['light', 'dark', 'system'] as const).map((t) => (
+              {(['light', 'dark', 'system'] as const).map((themeKey) => (
                 <button
-                  key={t}
-                  onClick={() => setTheme(t)}
+                  key={themeKey}
+                  onClick={() => setTheme(themeKey)}
                   className={`flex-1 h-9 rounded-lg border text-sm font-medium transition-colors ${
-                    theme === t
+                    theme === themeKey
                       ? 'border-(--color-foreground) bg-(--color-foreground) text-(--color-background)'
                       : 'border-(--color-border) text-(--color-muted-foreground) hover:border-(--color-foreground) hover:text-(--color-foreground)'
                   }`}
                 >
-                  {t === 'light' ? 'Clair' : t === 'dark' ? 'Sombre' : 'Système'}
+                  {themeKey === 'light' ? t('settings.themeLight') : themeKey === 'dark' ? t('settings.themeDark') : t('settings.themeSystem')}
                 </button>
               ))}
             </div>
@@ -144,7 +144,7 @@ export function Settings() {
         </Section>
 
         {/* Langue */}
-        <Section title="Langue" icon={Globe}>
+        <Section title={t('settings.language')} icon={Globe}>
           <div className="flex gap-2">
             {(['fr', 'en'] as const).map((lang) => (
               <button

@@ -67,6 +67,25 @@
     "delete": "Supprimer",
     "noCredentials": "Aucun identifiant enregistré"
   },
+  "settings": {
+    "subtitle": "Gérez votre compte et vos préférences.",
+    "profile": "Profil",
+    "security": "Sécurité",
+    "appearance": "Apparence",
+    "language": "Langue",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "updatePassword": "Mettre à jour",
+    "theme": "Thème",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "themeSystem": "Système",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+    "passwordUpdated": "Mot de passe mis à jour",
+    "passwordIncorrect": "Mot de passe actuel incorrect"
+  },
   "common": {
     "save": "Enregistrer",
     "cancel": "Annuler",
