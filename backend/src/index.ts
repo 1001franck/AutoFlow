@@ -6,6 +6,7 @@ import { config } from './config';
 import { initSocket } from './lib/socket';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
+import oauthRoutes from './routes/oauth';
 import webhookRoutes from './routes/webhook';
 import workflowRoutes from './routes/workflows';
 import runsRoutes from './routes/runs';
@@ -26,6 +27,7 @@ app.use(cookieParser());
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/auth', oauthRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/workflows', workflowRoutes);
 app.use('/', runsRoutes);
