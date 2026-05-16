@@ -66,7 +66,20 @@
     "connector": "Service",
     "label": "Libellé",
     "delete": "Supprimer",
-    "noCredentials": "Aucun identifiant enregistré"
+    "deleteConfirm": "Cette action est irréversible. L'identifiant sera définitivement supprimé.",
+    "noCredentials": "Aucun identifiant enregistré",
+    "subtitle": "Ajoutez vos tokens et clés API pour connecter vos services.",
+    "added": "Identifiant ajouté",
+    "deleted": "Identifiant supprimé",
+    "test": "Tester",
+    "testOk": "Connexion réussie",
+    "testFail": "Connexion échouée — vérifiez vos clés",
+    "connectGoogle": "Connecter avec Google",
+    "gmailOAuthHint": "Autorisez AutoFlow à accéder à votre compte Gmail en un clic.",
+    "gmailConnected": "Compte Gmail connecté avec succès",
+    "oauthCancelled": "Connexion Google annulée",
+    "oauthExpired": "Lien expiré, veuillez réessayer",
+    "noRefreshToken": "Erreur Google — réessayez en révoquant l'accès dans votre compte Google"
   },
   "settings": {
     "subtitle": "Gérez votre compte et vos préférences.",

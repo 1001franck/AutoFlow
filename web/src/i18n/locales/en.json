@@ -66,7 +66,20 @@
     "connector": "Service",
     "label": "Label",
     "delete": "Delete",
-    "noCredentials": "No credentials saved"
+    "deleteConfirm": "This action is irreversible. The credential will be permanently deleted.",
+    "noCredentials": "No credentials saved",
+    "subtitle": "Add your tokens and API keys to connect your services.",
+    "added": "Credential added",
+    "deleted": "Credential deleted",
+    "test": "Test",
+    "testOk": "Connection successful",
+    "testFail": "Connection failed — check your keys",
+    "connectGoogle": "Connect with Google",
+    "gmailOAuthHint": "Authorize AutoFlow to access your Gmail account in one click.",
+    "gmailConnected": "Gmail account connected successfully",
+    "oauthCancelled": "Google connection cancelled",
+    "oauthExpired": "Link expired, please try again",
+    "noRefreshToken": "Google error — try again by revoking access in your Google account"
   },
   "settings": {
     "subtitle": "Manage your account and preferences.",
