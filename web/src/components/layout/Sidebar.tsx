@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Workflow, KeyRound, Zap, History, Settings } from 'lucide-react';
+import { LayoutDashboard, Workflow, KeyRound, Zap, History, Settings, PlugZap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/dashboard',   icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { to: '/workflows',   icon: Workflow,         labelKey: 'nav.workflows' },
   { to: '/runs',        icon: History,          labelKey: 'nav.runs' },
+  { to: '/services',    icon: PlugZap,          labelKey: 'nav.services' },
   { to: '/credentials', icon: KeyRound,         labelKey: 'nav.credentials' },
 ];
 

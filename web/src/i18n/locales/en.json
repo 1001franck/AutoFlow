@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "workflows": "Workflows",
+    "services": "Services",
     "credentials": "Credentials",
     "runs": "Runs",
     "settings": "Settings"
@@ -105,6 +106,18 @@
     "passwordTooShort": "Password must be at least 8 characters",
     "passwordUpdated": "Password updated",
     "passwordIncorrect": "Current password is incorrect"
+  },
+  "services": {
+    "title": "Services",
+    "subtitle": "Connect your apps to power your workflows.",
+    "connected": "Connected",
+    "connect": "Connect",
+    "manage": "Manage",
+    "gmailDesc": "Send and read emails from your workflows.",
+    "discordDesc": "Send messages to your servers via a bot.",
+    "telegramDesc": "Send notifications via your Telegram bot.",
+    "notionDesc": "Create and edit pages in your Notion workspaces.",
+    "webhookDesc": "Trigger any HTTP URL from your workflows."
   },
   "common": {
     "save": "Save",
