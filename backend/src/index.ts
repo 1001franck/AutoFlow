@@ -12,6 +12,7 @@ import workflowRoutes from './routes/workflows';
 import runsRoutes from './routes/runs';
 import credentialsRoutes from './routes/credentials';
 import dashboardRoutes from './routes/dashboard';
+import notificationsRoutes from './routes/notifications';
 import { startWorker } from './engine/worker';
 import { startScheduler } from './engine/cron';
 
@@ -33,6 +34,7 @@ app.use('/workflows', workflowRoutes);
 app.use('/', runsRoutes);
 app.use('/credentials', credentialsRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/', notificationsRoutes);
 
 // Healthcheck pour Docker et monitoring
 app.get('/health', (_req, res) => {
