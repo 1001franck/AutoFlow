@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,13 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import type { RootStackParamList } from '../../App';
 import api, { setAccessToken } from '../api/client';
 
-const FRONTEND_URL = 'https://autoflow-fmrt.vercel.app';
-const API_URL = 'https://autoflow-fmrt.onrender.com';
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_CLIENT_ID = '504020587203-7dkmhaukeldkh4cpc1rne0u5jbe0mava.apps.googleusercontent.com';
 
 const THEME = {
   light: {
@@ -40,40 +42,37 @@ export function LoginScreen() {
   const c = THEME[scheme === 'dark' ? 'dark' : 'light'];
   const navigation = useNavigation<Nav>();
 
+  const [_request, googleResponse, promptAsync] = Google.useAuthRequest({
+    clientId: GOOGLE_CLIENT_ID,
+  });
+
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleGoogleSignIn = async () => {
-    setError('');
+  // Dès que Google répond, on échange le token avec notre backend
+  useEffect(() => {
+    if (googleResponse?.type !== 'success') return;
+    const googleToken = googleResponse.authentication?.accessToken;
+    if (!googleToken) { setError('Connexion Google échouée'); return; }
+
     setLoading(true);
-    try {
-      // Récupère l'URL OAuth Google depuis le backend
-      const { data } = await api.get('/auth/google/signin/init');
+    api.post('/auth/google/mobile', { accessToken: googleToken })
+      .then(async ({ data: session }) => {
+        setAccessToken(session.accessToken);
+        await AsyncStorage.setItem('isAuth', '1');
+        await AsyncStorage.setItem('userEmail', session.email);
+        navigation.replace('Dashboard');
+      })
+      .catch(() => setError('Erreur lors de la connexion Google'))
+      .finally(() => setLoading(false));
+  }, [googleResponse]); // eslint-disable-line react-hooks/exhaustive-deps
 
-      // Ouvre la webview — se ferme automatiquement quand Google redirige vers FRONTEND_URL
-      const result = await WebBrowser.openAuthSessionAsync(data.url, FRONTEND_URL);
-
-      if (result.type !== 'success') return;
-
-      // Parse le code d'échange depuis l'URL de retour
-      const url = new URL(result.url);
-      const code = url.searchParams.get('code');
-      if (!code) { setError('Connexion Google annulée'); return; }
-
-      // Échange le code contre un access token
-      const { data: session } = await api.post(`${API_URL}/auth/google/signin/exchange`, { code });
-      setAccessToken(session.accessToken);
-      await AsyncStorage.setItem('isAuth', '1');
-      await AsyncStorage.setItem('userEmail', session.email);
-      navigation.replace('Dashboard');
-    } catch {
-      setError('Erreur lors de la connexion Google');
-    } finally {
-      setLoading(false);
-    }
+  const handleGoogleSignIn = () => {
+    setError('');
+    promptAsync();
   };
 
   const handleSubmit = async () => {
