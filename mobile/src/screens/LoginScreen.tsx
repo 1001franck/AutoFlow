@@ -13,8 +13,12 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as WebBrowser from 'expo-web-browser';
 import type { RootStackParamList } from '../../App';
 import api, { setAccessToken } from '../api/client';
+
+const FRONTEND_URL = 'https://autoflow-fmrt.vercel.app';
+const API_URL = 'https://autoflow-fmrt.onrender.com';
 
 const THEME = {
   light: {
@@ -41,6 +45,36 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      // Récupère l'URL OAuth Google depuis le backend
+      const { data } = await api.get('/auth/google/signin/init');
+
+      // Ouvre la webview — se ferme automatiquement quand Google redirige vers FRONTEND_URL
+      const result = await WebBrowser.openAuthSessionAsync(data.url, FRONTEND_URL);
+
+      if (result.type !== 'success') return;
+
+      // Parse le code d'échange depuis l'URL de retour
+      const url = new URL(result.url);
+      const code = url.searchParams.get('code');
+      if (!code) { setError('Connexion Google annulée'); return; }
+
+      // Échange le code contre un access token
+      const { data: session } = await api.post(`${API_URL}/auth/google/signin/exchange`, { code });
+      setAccessToken(session.accessToken);
+      await AsyncStorage.setItem('isAuth', '1');
+      await AsyncStorage.setItem('userEmail', session.email);
+      navigation.replace('Dashboard');
+    } catch {
+      setError('Erreur lors de la connexion Google');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     setError('');
@@ -86,6 +120,8 @@ export function LoginScreen() {
         <TouchableOpacity
           style={[styles.googleButton, { borderColor: c.border, backgroundColor: c.card }]}
           activeOpacity={0.85}
+          onPress={handleGoogleSignIn}
+          disabled={loading}
         >
           <Text style={styles.googleLetter}>G</Text>
           <Text style={[styles.googleButtonText, { color: c.text }]}>Continuer avec Google</Text>
