@@ -17,7 +17,13 @@
     "registerTitle": "Create an account",
     "registerSubtitle": "Start automating in minutes",
     "noAccount": "Don't have an account?",
-    "alreadyAccount": "Already have an account?"
+    "alreadyAccount": "Already have an account?",
+    "continueWithGoogle": "Continue with Google",
+    "orContinueWith": "or",
+    "invalidCredentials": "Invalid credentials",
+    "registerError": "Error creating account",
+    "googleCancelled": "Google sign-in cancelled",
+    "googleExpired": "Link expired, please try again"
   },
   "dashboard": {
     "title": "Dashboard",

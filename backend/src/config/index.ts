@@ -40,4 +40,8 @@ export const config = {
     clientSecret: process.env.GMAIL_CLIENT_SECRET || '',
     redirectUri: process.env.GMAIL_REDIRECT_URI || 'http://localhost:3000/auth/gmail/callback',
   },
+
+  google: {
+    signinRedirectUri: process.env.GOOGLE_SIGNIN_REDIRECT_URI || 'http://localhost:3000/auth/google/signin/callback',
+  },
 };

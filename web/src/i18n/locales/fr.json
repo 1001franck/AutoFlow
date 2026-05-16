@@ -17,7 +17,13 @@
     "registerTitle": "Créer un compte",
     "registerSubtitle": "Commencez à automatiser en quelques minutes",
     "noAccount": "Pas encore de compte ?",
-    "alreadyAccount": "Déjà un compte ?"
+    "alreadyAccount": "Déjà un compte ?",
+    "continueWithGoogle": "Continuer avec Google",
+    "orContinueWith": "ou",
+    "invalidCredentials": "Identifiants incorrects",
+    "registerError": "Erreur lors de la création du compte",
+    "googleCancelled": "Connexion Google annulée",
+    "googleExpired": "Lien expiré, veuillez réessayer"
   },
   "dashboard": {
     "title": "Tableau de bord",

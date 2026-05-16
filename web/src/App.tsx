@@ -12,6 +12,19 @@ import { Runs } from '@/pages/Runs';
 import { Settings } from '@/pages/Settings';
 import api, { setAccessToken } from '@/api/client';
 
+// Intercepte le retour Google Sign-In avant que React s'initialise.
+// Le backend redirige vers /?googleAuth=1&email=...&token=...
+// On met à jour localStorage et on nettoie l'URL immédiatement.
+const _gParams = new URLSearchParams(window.location.search);
+if (_gParams.get('googleAuth') === '1') {
+  const _email = _gParams.get('email') ?? '';
+  const _token = _gParams.get('token') ?? '';
+  localStorage.setItem('isAuth', '1');
+  if (_email) localStorage.setItem('userEmail', _email);
+  if (_token) setAccessToken(_token);
+  window.history.replaceState({}, '', '/dashboard');
+}
+
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuth = Boolean(localStorage.getItem('isAuth'));
   return isAuth ? <>{children}</> : <Navigate to="/login" replace />;
