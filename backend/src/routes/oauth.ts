@@ -212,7 +212,7 @@ router.post('/google/signin/exchange', async (req: Request, res: Response) => {
   });
 
   // Cookie posé dans la réponse XHR — fiable en cross-origin avec withCredentials
-  res.cookie('refreshToken', refreshToken, cookieOptions());
+  res.cookie('refresh_token', refreshToken, cookieOptions());
   res.json({ accessToken, email: payload.email });
 });
 
