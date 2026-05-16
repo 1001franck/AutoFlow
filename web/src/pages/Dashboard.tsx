@@ -36,13 +36,13 @@ interface DashboardStats {
 }
 
 // Génère les 7 derniers jours et fusionne avec les données réelles
-function buildChartData(points: DayPoint[]): { label: string; runs: number }[] {
+function buildChartData(points: DayPoint[], locale: string): { label: string; runs: number }[] {
   const map = new Map(points.map((p) => [p.date, p.count]));
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
     const key = d.toISOString().slice(0, 10);
-    const label = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+    const label = d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric' });
     return { label, runs: map.get(key) ?? 0 };
   });
 }
@@ -75,7 +75,7 @@ function StatCard({
 }
 
 export function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery<DashboardStats>({
@@ -88,7 +88,7 @@ export function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
   });
 
-  const chartData = buildChartData(data?.runsLast7Days ?? []);
+  const chartData = buildChartData(data?.runsLast7Days ?? [], i18n.language);
 
   return (
     <Layout title={t('dashboard.title')}>
