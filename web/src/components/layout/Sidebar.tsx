@@ -77,14 +77,29 @@ export function Sidebar() {
       </nav>
 
       {/* Navigation secondaire en bas */}
-      <div className="px-3 pb-4 border-t border-(--color-border) pt-3 space-y-0.5">
+      <div className="px-3 pb-3 border-t border-(--color-border) pt-3 space-y-0.5">
         {bottomItems.map(({ to, icon: Icon, labelKey }) => (
           <NavLink key={to} to={to} className={({ isActive }) => linkClass(isActive)}>
             <Icon className="h-4 w-4 shrink-0" />
             {t(labelKey)}
           </NavLink>
         ))}
+        <UserCard />
       </div>
     </aside>
+  );
+}
+
+function UserCard() {
+  const email = localStorage.getItem('userEmail') ?? '';
+  const initial = email.charAt(0).toUpperCase();
+
+  return (
+    <div className="flex items-center gap-3 px-3 py-2.5 mt-1 rounded-lg border border-(--color-border)">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--color-primary) text-(--color-primary-foreground) text-xs font-semibold">
+        {initial}
+      </div>
+      <p className="text-xs text-(--color-muted-foreground) truncate">{email}</p>
+    </div>
   );
 }
