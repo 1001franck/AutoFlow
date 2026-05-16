@@ -115,7 +115,7 @@ function NotificationRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium truncate">{n.title}</p>
-          {!n.read && <Badge variant="destructive" className="shrink-0">{t('notifications.new')}</Badge>}
+          {!n.read && <Badge variant="error" className="shrink-0">{t('notifications.new')}</Badge>}
         </div>
         <p className="text-xs text-(--color-muted-foreground) mt-0.5">{n.message}</p>
         <p className="text-xs text-(--color-muted-foreground) mt-1">
