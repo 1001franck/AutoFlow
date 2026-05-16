@@ -1,10 +1,11 @@
-import { NavLink } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { LayoutDashboard, Workflow, KeyRound, Zap, History, Settings, PlugZap, Bell } from 'lucide-react';
+import { LayoutDashboard, Workflow, KeyRound, Zap, History, Settings, PlugZap, Bell, LogOut, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSocket } from '@/hooks/useSocket';
-import api from '@/api/client';
+import api, { setAccessToken } from '@/api/client';
 
 const navItems = [
   { to: '/dashboard',   icon: LayoutDashboard, labelKey: 'nav.dashboard' },
@@ -91,15 +92,62 @@ export function Sidebar() {
 }
 
 function UserCard() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
   const email = localStorage.getItem('userEmail') ?? '';
   const initial = email.charAt(0).toUpperCase();
 
+  const handleLogout = async () => {
+    await api.post('/auth/logout');
+    setAccessToken(null);
+    localStorage.removeItem('isAuth');
+    localStorage.removeItem('userEmail');
+    navigate('/login');
+  };
+
+  // Ferme le dropdown si clic en dehors
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 mt-1 rounded-lg border border-(--color-border)">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--color-primary) text-(--color-primary-foreground) text-xs font-semibold">
-        {initial}
-      </div>
-      <p className="text-xs text-(--color-muted-foreground) truncate">{email}</p>
+    <div className="relative mt-1" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-(--color-border) hover:bg-(--color-muted) transition-colors"
+      >
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--color-primary) text-(--color-primary-foreground) text-xs font-semibold">
+          {initial}
+        </div>
+        <p className="text-xs text-(--color-muted-foreground) truncate flex-1 text-left">{email}</p>
+        <ChevronUp className={`h-3.5 w-3.5 shrink-0 text-(--color-muted-foreground) transition-transform duration-200 ${open ? '' : 'rotate-180'}`} />
+      </button>
+
+      {open && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 rounded-xl border border-(--color-border) bg-(--color-card) shadow-lg overflow-hidden z-50">
+          <button
+            onClick={() => { setOpen(false); navigate('/settings'); }}
+            className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
+          >
+            <Settings className="h-3.5 w-3.5" />
+            {t('nav.settings')}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-(--color-destructive) hover:bg-(--color-muted) transition-colors border-t border-(--color-border)"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            {t('auth.logout')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
