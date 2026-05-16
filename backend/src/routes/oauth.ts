@@ -216,4 +216,39 @@ router.post('/google/signin/exchange', async (req: Request, res: Response) => {
   res.json({ accessToken, email: payload.email });
 });
 
+// POST /auth/google/mobile — vérifie un access token Google depuis l'app mobile
+router.post('/google/mobile', async (req: Request, res: Response) => {
+  const { accessToken: googleToken } = req.body as { accessToken?: string };
+
+  if (!googleToken) {
+    res.status(400).json({ error: 'accessToken requis' });
+    return;
+  }
+
+  // Vérifie le token auprès de Google
+  const tokenInfo = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${googleToken}`);
+  const info = await tokenInfo.json() as { email?: string; error?: string };
+
+  if (!info.email) {
+    res.status(401).json({ error: 'Token Google invalide' });
+    return;
+  }
+
+  let user = await prisma.user.findUnique({ where: { email: info.email } });
+  if (!user) {
+    const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+    user = await prisma.user.create({ data: { email: info.email, password: randomPassword } });
+  }
+
+  const accessToken = jwt.sign({ userId: user.id }, config.jwt.secret, {
+    expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'],
+  });
+  const refreshToken = jwt.sign({ userId: user.id }, config.jwt.refreshSecret, {
+    expiresIn: config.jwt.refreshExpiresIn as jwt.SignOptions['expiresIn'],
+  });
+
+  res.cookie('refresh_token', refreshToken, cookieOptions());
+  res.json({ accessToken, email: user.email });
+});
+
 export default router;
