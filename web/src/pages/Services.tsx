@@ -157,7 +157,7 @@ function ServiceCard({
       </div>
 
       <Button
-        variant={isConnected ? 'outline' : 'default'}
+        variant={isConnected ? 'outline' : 'primary'}
         size="sm"
         onClick={handleConnect}
         className="w-full"
