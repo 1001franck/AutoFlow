@@ -36,26 +36,22 @@ function SplashScreen() {
 }
 
 export default function App() {
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(() => !localStorage.getItem('isAuth'));
 
   useEffect(() => {
-    const isAuth = localStorage.getItem('isAuth');
-    if (!isAuth) { setReady(true); return; }
+    if (ready) return;
 
     // Timeout de 8s — si Render dort, on ne bloque pas indéfiniment
     const timeout = setTimeout(() => setReady(true), 8000);
 
     api.post('/auth/refresh')
       .then(({ data }) => setAccessToken(data.accessToken))
-      .catch(() => {
-        // Ne déconnecte pas si c'est un timeout réseau (Render qui se réveille)
-        // Déconnecte seulement si c'est une vraie erreur 401
-      })
+      .catch(() => {})
       .finally(() => {
         clearTimeout(timeout);
         setReady(true);
       });
-  }, []);
+  }, [ready]);
 
   if (!ready) return <SplashScreen />;
 
