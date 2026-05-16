@@ -85,7 +85,7 @@ export function LoginScreen() {
           setAccessToken(session.accessToken);
           await AsyncStorage.setItem('isAuth', '1');
           await AsyncStorage.setItem('userEmail', session.email ?? '');
-          navigation.replace('Dashboard');
+          navigation.replace('Main');
           return;
         }
 
@@ -114,7 +114,7 @@ export function LoginScreen() {
       setAccessToken(data.accessToken);
       await AsyncStorage.setItem('isAuth', '1');
       await AsyncStorage.setItem('userEmail', email);
-      navigation.replace('Dashboard');
+      navigation.replace('Main');
     } catch {
       setError(mode === 'login' ? 'Identifiants incorrects' : 'Erreur lors de la création du compte');
     } finally {

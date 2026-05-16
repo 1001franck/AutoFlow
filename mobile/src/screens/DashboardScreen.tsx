@@ -4,18 +4,14 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   useColorScheme,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
-import type { RootStackParamList } from '../../App';
-import api, { setAccessToken } from '../api/client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../api/client';
 
 // Même palette que le web et le LoginScreen
 const THEME = {
@@ -90,12 +86,9 @@ function StatCard({ label, value, c }: { label: string; value: string; c: typeof
   );
 }
 
-type Nav = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
-
 export function DashboardScreen() {
   const scheme = useColorScheme();
   const c = THEME[scheme === 'dark' ? 'dark' : 'light'];
-  const navigation = useNavigation<Nav>();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -113,16 +106,9 @@ export function DashboardScreen() {
   }, []);
 
   useEffect(() => {
-    // Charge l'email depuis le stockage local et les stats depuis l'API
     AsyncStorage.getItem('userEmail').then((v) => setEmail(v ?? ''));
     fetchStats();
   }, [fetchStats]);
-
-  const handleLogout = async () => {
-    setAccessToken('');
-    await AsyncStorage.multiRemove(['isAuth', 'userEmail']);
-    navigation.replace('Login');
-  };
 
   const chartData = buildChartData(stats?.runsLast7Days ?? []);
   const chartValues = chartData.map((d) => d.runs);
@@ -133,13 +119,8 @@ export function DashboardScreen() {
 
       {/* En-tête */}
       <View style={[styles.header, { borderBottomColor: c.border }]}>
-        <View>
-          <Text style={[styles.headerTitle, { color: c.text }]}>Tableau de bord</Text>
-          {email ? <Text style={[styles.headerEmail, { color: c.muted }]}>{email}</Text> : null}
-        </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn} activeOpacity={0.7}>
-          <Text style={[styles.logoutText, { color: c.muted }]}>Déconnexion</Text>
-        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: c.text }]}>Tableau de bord</Text>
+        {email ? <Text style={[styles.headerEmail, { color: c.muted }]}>{email}</Text> : null}
       </View>
 
       {loading ? (
