@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 export function LoginScreen() {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -27,8 +28,10 @@ export function LoginScreen() {
           <Text style={styles.brandName}>AutoFlow</Text>
         </View>
 
-        <Text style={styles.title}>Bon retour</Text>
-        <Text style={styles.subtitle}>Connectez-vous à votre espace AutoFlow</Text>
+        <Text style={styles.title}>{mode === 'login' ? 'Bon retour' : 'Créer un compte'}</Text>
+        <Text style={styles.subtitle}>
+          {mode === 'login' ? 'Connectez-vous à votre espace AutoFlow' : 'Commencez à automatiser en quelques minutes'}
+        </Text>
 
         {/* Champs */}
         <TextInput
@@ -65,7 +68,14 @@ export function LoginScreen() {
         </View>
 
         <TouchableOpacity style={styles.button} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>Connexion</Text>
+          <Text style={styles.buttonText}>{mode === 'login' ? 'Connexion' : 'Créer un compte'}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setMode(mode === 'login' ? 'register' : 'login')} style={styles.switchWrapper}>
+          <Text style={styles.switchText}>
+            {mode === 'login' ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}
+            <Text style={styles.switchLink}>{mode === 'login' ? 'Créer un compte' : 'Se connecter'}</Text>
+          </Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -174,6 +184,18 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#ffffff',
     fontSize: 15,
+    fontWeight: '600',
+  },
+  switchWrapper: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  switchText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  switchLink: {
+    color: '#000000',
     fontWeight: '600',
   },
 });
