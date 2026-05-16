@@ -9,7 +9,15 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  useSharedValue,
+  useAnimatedProps,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/client';
 
@@ -47,13 +55,14 @@ function buildChartData(points: DayPoint[]) {
   });
 }
 
-// Graphique area SVG — utilise react-native-svg déjà installé
+const DASH = 2000; // valeur supérieure à toute longueur de chemin possible
+
+// Graphique area SVG avec animation "tracé" au chargement
 function AreaChart({ data, color }: { data: number[]; color: string }) {
-  const W = Dimensions.get('window').width - 96; // largeur carte - padding
+  const W = Dimensions.get('window').width - 96;
   const H = 100;
   const max = Math.max(...data, 1);
 
-  // Calcule les coordonnées de chaque point
   const coords = data.map((v, i) => ({
     x: data.length > 1 ? (i / (data.length - 1)) * W : W / 2,
     y: H - 8 - (v / max) * (H - 16),
@@ -61,6 +70,15 @@ function AreaChart({ data, color }: { data: number[]; color: string }) {
 
   const line = coords.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const area = `${line} L${W},${H} L0,${H} Z`;
+
+  // strokeDashoffset part de DASH (invisible) et descend à 0 (tracé complet)
+  const offset = useSharedValue(DASH);
+  useEffect(() => {
+    offset.value = DASH;
+    offset.value = withTiming(0, { duration: 1200, easing: Easing.out(Easing.cubic) });
+  }, [data]);
+
+  const animatedProps = useAnimatedProps(() => ({ strokeDashoffset: offset.value }));
 
   return (
     <Svg width={W} height={H}>
@@ -71,7 +89,16 @@ function AreaChart({ data, color }: { data: number[]; color: string }) {
         </SvgGradient>
       </Defs>
       <Path d={area} fill="url(#areaGrad)" />
-      <Path d={line} stroke={color} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <AnimatedPath
+        d={line}
+        stroke={color}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={DASH}
+        animatedProps={animatedProps}
+      />
     </Svg>
   );
 }
