@@ -8,7 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   useColorScheme,
+  ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RootStackParamList } from '../../App';
+import api, { setAccessToken } from '../api/client';
 
 const THEME = {
   light: {
@@ -23,13 +29,35 @@ const THEME = {
   },
 };
 
+type Nav = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
 export function LoginScreen() {
   const scheme = useColorScheme();
   const c = THEME[scheme === 'dark' ? 'dark' : 'light'];
+  const navigation = useNavigation<Nav>();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
+      const { data } = await api.post(endpoint, { email, password });
+      setAccessToken(data.accessToken);
+      await AsyncStorage.setItem('isAuth', '1');
+      await AsyncStorage.setItem('userEmail', email);
+      navigation.replace('Dashboard');
+    } catch {
+      setError(mode === 'login' ? 'Identifiants incorrects' : 'Erreur lors de la création du compte');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -91,10 +119,20 @@ export function LoginScreen() {
           autoComplete="password"
         />
 
-        <TouchableOpacity style={[styles.button, { backgroundColor: c.btnBg }]} activeOpacity={0.85}>
-          <Text style={[styles.buttonText, { color: c.btnText }]}>
-            {mode === 'login' ? 'Connexion' : 'Créer un compte'}
-          </Text>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: c.btnBg }]}
+          activeOpacity={0.85}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          {loading
+            ? <ActivityIndicator color={c.btnText} />
+            : <Text style={[styles.buttonText, { color: c.btnText }]}>
+                {mode === 'login' ? 'Connexion' : 'Créer un compte'}
+              </Text>
+          }
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -141,4 +179,5 @@ const styles = StyleSheet.create({
   switchWrapper: { marginTop: 20, alignItems: 'center' },
   switchText: { fontSize: 14 },
   switchLink: { fontWeight: '600' },
+  error: { fontSize: 13, color: '#ef4444', marginBottom: 10 },
 });
