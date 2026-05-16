@@ -147,6 +147,7 @@ export function Dashboard() {
                   allowDecimals={false}
                 />
                 <Tooltip
+                  formatter={(value: number) => [value, t('dashboard.runs')]}
                   contentStyle={{
                     background: 'var(--color-card)',
                     border: '1px solid var(--color-border)',

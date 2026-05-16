@@ -25,6 +25,7 @@
     "successRate": "Taux de succès",
     "activeWorkflows": "Workflows actifs",
     "last7Days": "7 derniers jours",
+    "runs": "Exécutions",
     "topWorkflows": "Workflows les plus actifs",
     "recentActivity": "Activité récente"
   },

@@ -25,6 +25,7 @@
     "successRate": "Success rate",
     "activeWorkflows": "Active workflows",
     "last7Days": "Last 7 days",
+    "runs": "Runs",
     "topWorkflows": "Most active workflows",
     "recentActivity": "Recent activity"
   },
