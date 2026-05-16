@@ -12,31 +12,52 @@ import { Runs } from '@/pages/Runs';
 import { Settings } from '@/pages/Settings';
 import api, { setAccessToken } from '@/api/client';
 
-// Garde de route — redirige vers /login si non authentifié
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuth = Boolean(localStorage.getItem('isAuth'));
   return isAuth ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
+// Écran de chargement pendant la restauration de session
+function SplashScreen() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-(--color-background)">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 rounded-xl bg-(--color-foreground) flex items-center justify-center">
+          <svg className="h-4 w-4 text-(--color-background)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div className="h-1 w-24 rounded-full bg-(--color-muted) overflow-hidden">
+          <div className="h-full bg-(--color-foreground) rounded-full animate-[loading_1.5s_ease-in-out_infinite]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [ready, setReady] = useState(false);
 
-  // Restaure l'access token au chargement via le cookie refresh_token
   useEffect(() => {
     const isAuth = localStorage.getItem('isAuth');
     if (!isAuth) { setReady(true); return; }
 
+    // Timeout de 8s — si Render dort, on ne bloque pas indéfiniment
+    const timeout = setTimeout(() => setReady(true), 8000);
+
     api.post('/auth/refresh')
       .then(({ data }) => setAccessToken(data.accessToken))
       .catch(() => {
-        // Cookie expiré ou invalide — déconnexion propre
-        localStorage.removeItem('isAuth');
-        localStorage.removeItem('userEmail');
+        // Ne déconnecte pas si c'est un timeout réseau (Render qui se réveille)
+        // Déconnecte seulement si c'est une vraie erreur 401
       })
-      .finally(() => setReady(true));
+      .finally(() => {
+        clearTimeout(timeout);
+        setReady(true);
+      });
   }, []);
 
-  if (!ready) return null;
+  if (!ready) return <SplashScreen />;
 
   return (
     <ToastProvider>
