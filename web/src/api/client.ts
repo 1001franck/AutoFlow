@@ -44,6 +44,8 @@ api.interceptors.response.use(
         return api(original);
       } catch {
         setAccessToken(null);
+        localStorage.removeItem('isAuth');
+        localStorage.removeItem('userEmail');
         window.location.href = '/login';
       }
     }

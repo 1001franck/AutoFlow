@@ -22,6 +22,8 @@ if (_gParams.get('googleAuth') === '1') {
   localStorage.setItem('isAuth', '1');
   if (_email) localStorage.setItem('userEmail', _email);
   if (_token) setAccessToken(_token);
+  // Indique à l'effet de ne pas appeler /auth/refresh — le token est déjà en mémoire
+  sessionStorage.setItem('googleJustSignedIn', '1');
   window.history.replaceState({}, '', '/dashboard');
 }
 
@@ -53,6 +55,13 @@ export default function App() {
 
   useEffect(() => {
     if (ready) return;
+
+    // Juste après Google Sign-In : le token est déjà en mémoire, pas besoin de refresh
+    if (sessionStorage.getItem('googleJustSignedIn')) {
+      sessionStorage.removeItem('googleJustSignedIn');
+      setReady(true);
+      return;
+    }
 
     // Timeout de 8s — si Render dort, on ne bloque pas indéfiniment
     const timeout = setTimeout(() => setReady(true), 8000);
