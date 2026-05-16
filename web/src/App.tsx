@@ -59,7 +59,7 @@ export default function App() {
     // Juste après Google Sign-In : le token est déjà en mémoire, pas besoin de refresh
     if (sessionStorage.getItem('googleJustSignedIn')) {
       sessionStorage.removeItem('googleJustSignedIn');
-      setReady(true);
+      setTimeout(() => setReady(true), 0);
       return;
     }
 
