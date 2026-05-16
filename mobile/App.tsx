@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { WorkflowsScreen } from './src/screens/WorkflowsScreen';
+import { ServicesScreen } from './src/screens/ServicesScreen';
+import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 
 export type RootStackParamList = {
@@ -16,11 +18,21 @@ export type RootStackParamList = {
 export type TabParamList = {
   Dashboard: undefined;
   Workflows: undefined;
+  Services: undefined;
+  Notifications: undefined;
   Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
+
+const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  Dashboard: 'grid-outline',
+  Workflows: 'flash-outline',
+  Services: 'apps-outline',
+  Notifications: 'notifications-outline',
+  Settings: 'person-outline',
+};
 
 function MainTabs() {
   const scheme = useColorScheme();
@@ -40,20 +52,17 @@ function MainTabs() {
         },
         tabBarActiveTintColor: dark ? '#ffffff' : '#000000',
         tabBarInactiveTintColor: dark ? '#3a3a3a' : '#c0c0c0',
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
-        tabBarIcon: ({ color, size }) => {
-          const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-            Dashboard: 'grid-outline',
-            Workflows: 'flash-outline',
-            Settings: 'person-outline',
-          };
-          return <Ionicons name={icons[route.name]} size={size - 2} color={color} />;
-        },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '500' },
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name={TAB_ICONS[route.name]} size={size - 2} color={color} />
+        ),
       })}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Accueil' }} />
-      <Tab.Screen name="Workflows" component={WorkflowsScreen} options={{ tabBarLabel: 'Workflows' }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarLabel: 'Compte' }} />
+      <Tab.Screen name="Dashboard"     component={DashboardScreen}     options={{ tabBarLabel: 'Accueil' }} />
+      <Tab.Screen name="Workflows"     component={WorkflowsScreen}     options={{ tabBarLabel: 'Workflows' }} />
+      <Tab.Screen name="Services"      component={ServicesScreen}      options={{ tabBarLabel: 'Services' }} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} options={{ tabBarLabel: 'Notifs' }} />
+      <Tab.Screen name="Settings"      component={SettingsScreen}      options={{ tabBarLabel: 'Compte' }} />
     </Tab.Navigator>
   );
 }
