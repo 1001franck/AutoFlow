@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "workflows": "Workflows",
+    "notifications": "Notifications",
     "services": "Services",
     "credentials": "Credentials",
     "runs": "Runs",
@@ -106,6 +107,15 @@
     "passwordTooShort": "Password must be at least 8 characters",
     "passwordUpdated": "Password updated",
     "passwordIncorrect": "Current password is incorrect"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread",
+    "allRead": "You're all caught up",
+    "markAllRead": "Mark all as read",
+    "new": "New",
+    "empty": "No notifications",
+    "emptySubtitle": "Run alerts will appear here."
   },
   "services": {
     "title": "Services",

@@ -11,6 +11,7 @@ import { RunDetail } from '@/pages/RunDetail';
 import { Runs } from '@/pages/Runs';
 import { Settings } from '@/pages/Settings';
 import { Services } from '@/pages/Services';
+import { Notifications } from '@/pages/Notifications';
 import axios from 'axios';
 import api, { setAccessToken } from '@/api/client';
 
@@ -110,6 +111,7 @@ export default function App() {
           <Route path="/runs" element={<PrivateRoute><Runs /></PrivateRoute>} />
           <Route path="/workflows/:id/runs" element={<PrivateRoute><RunHistory /></PrivateRoute>} />
           <Route path="/runs/:runId" element={<PrivateRoute><RunDetail /></PrivateRoute>} />
+          <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
           <Route path="/services" element={<PrivateRoute><Services /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

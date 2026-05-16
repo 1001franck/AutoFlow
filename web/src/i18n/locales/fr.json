@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "workflows": "Workflows",
+    "notifications": "Notifications",
     "services": "Services",
     "credentials": "Identifiants",
     "runs": "Exécutions",
@@ -106,6 +107,15 @@
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
     "passwordUpdated": "Mot de passe mis à jour",
     "passwordIncorrect": "Mot de passe actuel incorrect"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} non lue(s)",
+    "allRead": "Tout est à jour",
+    "markAllRead": "Tout marquer comme lu",
+    "new": "Nouveau",
+    "empty": "Aucune notification",
+    "emptySubtitle": "Les alertes d'exécution apparaîtront ici."
   },
   "services": {
     "title": "Services",
