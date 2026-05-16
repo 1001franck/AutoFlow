@@ -172,21 +172,48 @@ router.get('/google/signin/callback', async (req: Request, res: Response) => {
       user = await prisma.user.create({ data: { email, password: randomPassword } });
     }
 
-    // Génère les tokens AutoFlow
-    const accessToken = jwt.sign({ userId: user.id }, config.jwt.secret, {
-      expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'],
-    });
-    const refreshToken = jwt.sign({ userId: user.id }, config.jwt.refreshSecret, {
-      expiresIn: config.jwt.refreshExpiresIn as jwt.SignOptions['expiresIn'],
-    });
+    // Code d'échange court-vécu (2 min) — le frontend l'échange via XHR pour obtenir le cookie
+    const exchangeCode = jwt.sign(
+      { userId: user.id, email, type: 'google_exchange' },
+      config.jwt.secret,
+      { expiresIn: '2m' },
+    );
 
-    res.cookie('refreshToken', refreshToken, cookieOptions());
-
-    // Redirige vers la racine avec le signal googleAuth — App.tsx prend le relais
-    res.redirect(`${frontendUrl}/?googleAuth=1&email=${encodeURIComponent(email)}&token=${encodeURIComponent(accessToken)}`);
+    res.redirect(`${frontendUrl}/?googleOAuth=1&code=${encodeURIComponent(exchangeCode)}&email=${encodeURIComponent(email)}`);
   } catch {
     res.redirect(`${frontendUrl}/login?error=google_failed`);
   }
+});
+
+// POST /auth/google/signin/exchange — échange le code contre un vrai cookie + access token
+// Appelé par le frontend via XHR (withCredentials) — le cookie est posé dans cette réponse XHR
+router.post('/google/signin/exchange', async (req: Request, res: Response) => {
+  const { code } = req.body as { code?: string };
+
+  if (!code) {
+    res.status(400).json({ error: 'code requis' });
+    return;
+  }
+
+  let payload: { userId: string; email: string; type: string };
+  try {
+    payload = jwt.verify(code, config.jwt.secret) as { userId: string; email: string; type: string };
+    if (payload.type !== 'google_exchange') throw new Error('type invalide');
+  } catch {
+    res.status(400).json({ error: 'code invalide ou expiré' });
+    return;
+  }
+
+  const accessToken = jwt.sign({ userId: payload.userId }, config.jwt.secret, {
+    expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'],
+  });
+  const refreshToken = jwt.sign({ userId: payload.userId }, config.jwt.refreshSecret, {
+    expiresIn: config.jwt.refreshExpiresIn as jwt.SignOptions['expiresIn'],
+  });
+
+  // Cookie posé dans la réponse XHR — fiable en cross-origin avec withCredentials
+  res.cookie('refreshToken', refreshToken, cookieOptions());
+  res.json({ accessToken, email: payload.email });
 });
 
 export default router;

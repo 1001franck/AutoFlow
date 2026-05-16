@@ -10,21 +10,19 @@ import { RunHistory } from '@/pages/RunHistory';
 import { RunDetail } from '@/pages/RunDetail';
 import { Runs } from '@/pages/Runs';
 import { Settings } from '@/pages/Settings';
+import axios from 'axios';
 import api, { setAccessToken } from '@/api/client';
 
 // Intercepte le retour Google Sign-In avant que React s'initialise.
-// Le backend redirige vers /?googleAuth=1&email=...&token=...
-// On met à jour localStorage et on nettoie l'URL immédiatement.
+// Le backend redirige vers /?googleOAuth=1&code=<exchangeCode>&email=<email>
+// On stocke le code dans sessionStorage pour l'échanger via XHR dans useEffect.
 const _gParams = new URLSearchParams(window.location.search);
-if (_gParams.get('googleAuth') === '1') {
+if (_gParams.get('googleOAuth') === '1') {
+  const _code = _gParams.get('code') ?? '';
   const _email = _gParams.get('email') ?? '';
-  const _token = _gParams.get('token') ?? '';
-  localStorage.setItem('isAuth', '1');
-  if (_email) localStorage.setItem('userEmail', _email);
-  if (_token) setAccessToken(_token);
-  // Indique à l'effet de ne pas appeler /auth/refresh — le token est déjà en mémoire
-  sessionStorage.setItem('googleJustSignedIn', '1');
-  window.history.replaceState({}, '', '/dashboard');
+  if (_code) sessionStorage.setItem('googleOAuthCode', _code);
+  if (_email) sessionStorage.setItem('googleOAuthEmail', _email);
+  window.history.replaceState({}, '', '/');
 }
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -51,15 +49,36 @@ function SplashScreen() {
 }
 
 export default function App() {
-  const [ready, setReady] = useState(() => !localStorage.getItem('isAuth'));
+  // Si un code d'échange Google est en attente, on n'est pas encore prêt
+  const [ready, setReady] = useState(() => {
+    if (sessionStorage.getItem('googleOAuthCode')) return false;
+    return !localStorage.getItem('isAuth');
+  });
 
   useEffect(() => {
     if (ready) return;
 
-    // Juste après Google Sign-In : le token est déjà en mémoire, pas besoin de refresh
-    if (sessionStorage.getItem('googleJustSignedIn')) {
-      sessionStorage.removeItem('googleJustSignedIn');
-      setTimeout(() => setReady(true), 0);
+    const exchangeCode = sessionStorage.getItem('googleOAuthCode');
+
+    if (exchangeCode) {
+      // Échange le code via XHR — le cookie httpOnly est posé dans cette réponse
+      sessionStorage.removeItem('googleOAuthCode');
+      const email = sessionStorage.getItem('googleOAuthEmail') ?? '';
+      sessionStorage.removeItem('googleOAuthEmail');
+
+      const base = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+      axios.post(`${base}/auth/google/signin/exchange`, { code: exchangeCode }, { withCredentials: true })
+        .then(({ data }) => {
+          setAccessToken(data.accessToken);
+          localStorage.setItem('isAuth', '1');
+          localStorage.setItem('userEmail', data.email ?? email);
+          window.history.replaceState({}, '', '/dashboard');
+        })
+        .catch(() => {
+          localStorage.removeItem('isAuth');
+          localStorage.removeItem('userEmail');
+        })
+        .finally(() => setReady(true));
       return;
     }
 
