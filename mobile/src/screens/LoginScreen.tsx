@@ -5,10 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
   useColorScheme,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,15 +20,27 @@ import type { RootStackParamList } from '../../App';
 import api, { setAccessToken } from '../api/client';
 
 const THEME = {
-  light: {
-    bg: '#ffffff', card: '#f9fafb', border: '#e5e7eb',
-    text: '#000000', muted: '#6b7280', placeholder: '#9ca3af',
-    btnBg: '#000000', btnText: '#ffffff',
-  },
   dark: {
-    bg: '#0a0a0a', card: '#1a1a1a', border: '#2a2a2a',
-    text: '#ffffff', muted: '#9ca3af', placeholder: '#6b7280',
-    btnBg: '#ffffff', btnText: '#000000',
+    bg: '#000000',
+    text: '#ffffff',
+    muted: '#4a4a4a',
+    label: '#333333',
+    line: '#1e1e1e',
+    placeholder: '#2e2e2e',
+    btnBg: '#ffffff',
+    btnText: '#000000',
+    googleBorder: '#1e1e1e',
+  },
+  light: {
+    bg: '#f7f7f7',
+    text: '#0a0a0a',
+    muted: '#aaaaaa',
+    label: '#bbbbbb',
+    line: '#dedede',
+    placeholder: '#d0d0d0',
+    btnBg: '#0a0a0a',
+    btnText: '#ffffff',
+    googleBorder: '#e0e0e0',
   },
 };
 
@@ -34,7 +48,8 @@ type Nav = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 export function LoginScreen() {
   const scheme = useColorScheme();
-  const c = THEME[scheme === 'dark' ? 'dark' : 'light'];
+  const dark = scheme === 'dark';
+  const c = THEME[dark ? 'dark' : 'light'];
   const navigation = useNavigation<Nav>();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -47,17 +62,16 @@ export function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      // 1. Demande au backend une URL Google + un identifiant de session unique
+      // 1. Le backend génère une URL Google + un sessionId unique
       const { data } = await api.get<{ sessionId: string; url: string }>('/auth/google/mobile/init');
       const { sessionId, url } = data;
 
-      // 2. Ouvre un navigateur in-app sur la page Google Sign-In
-      //    On ne attend pas la fermeture — le polling tourne en parallèle
+      // 2. Ouvre la page Google dans un navigateur in-app (sans attendre la fermeture)
       WebBrowser.openBrowserAsync(url).catch(() => {});
 
-      // 3. Poll toutes les 2s pendant 5 minutes max pour récupérer le token
-      for (let i = 0; i < 150; i++) {
-        await new Promise(r => setTimeout(r, 2000));
+      // 3. Poll toutes les secondes - le navigateur se ferme dès que l'auth est détectée
+      for (let i = 0; i < 300; i++) {
+        await new Promise(r => setTimeout(r, 1000));
 
         const { data: session } = await api.get<{
           status: 'pending' | 'success' | 'error' | 'expired';
@@ -66,7 +80,6 @@ export function LoginScreen() {
         }>(`/auth/google/mobile/poll/${sessionId}`);
 
         if (session.status === 'success' && session.accessToken) {
-          // Auth réussie — ferme le navigateur et navigue vers le dashboard
           await WebBrowser.dismissBrowser();
           setAccessToken(session.accessToken);
           await AsyncStorage.setItem('isAuth', '1');
@@ -77,17 +90,15 @@ export function LoginScreen() {
 
         if (session.status === 'error' || session.status === 'expired') {
           await WebBrowser.dismissBrowser();
-          setError('Erreur lors de la connexion Google');
+          setError('Connexion Google échouée');
           return;
         }
-        // status === 'pending' → l'utilisateur n'a pas encore terminé, on continue
       }
 
-      // 5 minutes écoulées sans réponse
       await WebBrowser.dismissBrowser();
       setError('Délai expiré, réessayez');
     } catch {
-      setError('Erreur lors de la connexion Google');
+      setError('Connexion Google échouée');
     } finally {
       setLoading(false);
     }
@@ -112,49 +123,54 @@ export function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: c.bg }]}
+      style={[styles.root, { backgroundColor: c.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.inner}>
-        {/* Logo */}
-        <View style={styles.logoWrapper}>
-          <View style={[styles.logoBox, { backgroundColor: c.text }]}>
-            <Text style={styles.logoEmoji}>⚡</Text>
-          </View>
+      <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} />
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Marque en haut */}
+        <View style={styles.brand}>
+          <Text style={[styles.brandIcon, { color: c.text }]}>⚡</Text>
           <Text style={[styles.brandName, { color: c.text }]}>AutoFlow</Text>
         </View>
 
-        <Text style={[styles.title, { color: c.text }]}>
-          {mode === 'login' ? 'Bon retour' : 'Créer un compte'}
+        {/* Titre principal */}
+        <Text style={[styles.heading, { color: c.text }]}>
+          {mode === 'login' ? 'Bon retour.' : 'Bienvenue.'}
         </Text>
-        <Text style={[styles.subtitle, { color: c.muted }]}>
+        <Text style={[styles.sub, { color: c.muted }]}>
           {mode === 'login'
-            ? 'Connectez-vous à votre espace AutoFlow'
-            : 'Commencez à automatiser en quelques minutes'}
+            ? 'Connectez-vous pour continuer.'
+            : 'Créez votre compte en quelques secondes.'}
         </Text>
 
-        {/* Bouton Google */}
+        {/* Google */}
         <TouchableOpacity
-          style={[styles.googleButton, { borderColor: c.border, backgroundColor: c.card }]}
-          activeOpacity={0.85}
+          style={[styles.googleBtn, { borderColor: c.googleBorder }]}
           onPress={handleGoogleSignIn}
+          activeOpacity={0.6}
           disabled={loading}
         >
-          <Text style={styles.googleLetter}>G</Text>
-          <Text style={[styles.googleButtonText, { color: c.text }]}>Continuer avec Google</Text>
+          <Text style={styles.googleG}>G</Text>
+          <Text style={[styles.googleLabel, { color: c.text }]}>Continuer avec Google</Text>
         </TouchableOpacity>
 
-        {/* Separateur */}
-        <View style={styles.separator}>
-          <View style={[styles.separatorLine, { backgroundColor: c.border }]} />
-          <Text style={[styles.separatorText, { color: c.muted }]}>ou</Text>
-          <View style={[styles.separatorLine, { backgroundColor: c.border }]} />
+        {/* Séparateur */}
+        <View style={styles.sep}>
+          <View style={[styles.sepLine, { backgroundColor: c.line }]} />
+          <Text style={[styles.sepText, { color: c.muted }]}>ou</Text>
+          <View style={[styles.sepLine, { backgroundColor: c.line }]} />
         </View>
 
-        {/* Champs */}
+        {/* Champ email */}
+        <Text style={[styles.label, { color: c.label }]}>EMAIL</Text>
         <TextInput
-          style={[styles.input, { borderColor: c.border, backgroundColor: c.card, color: c.text }]}
-          placeholder="you@example.com"
+          style={[styles.input, { borderBottomColor: c.line, color: c.text }]}
+          placeholder="vous@exemple.com"
           placeholderTextColor={c.placeholder}
           value={email}
           onChangeText={setEmail}
@@ -162,8 +178,11 @@ export function LoginScreen() {
           autoCapitalize="none"
           autoComplete="email"
         />
+
+        {/* Champ mot de passe */}
+        <Text style={[styles.label, { color: c.label, marginTop: 28 }]}>MOT DE PASSE</Text>
         <TextInput
-          style={[styles.input, { borderColor: c.border, backgroundColor: c.card, color: c.text }]}
+          style={[styles.input, { borderBottomColor: c.line, color: c.text }]}
           placeholder="••••••••"
           placeholderTextColor={c.placeholder}
           value={password}
@@ -174,63 +193,74 @@ export function LoginScreen() {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
+        {/* Bouton pill */}
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: c.btnBg }]}
-          activeOpacity={0.85}
+          style={[styles.pill, { backgroundColor: c.btnBg, marginTop: error ? 20 : 36 }]}
           onPress={handleSubmit}
+          activeOpacity={0.85}
           disabled={loading}
         >
           {loading
             ? <ActivityIndicator color={c.btnText} />
-            : <Text style={[styles.buttonText, { color: c.btnText }]}>
-                {mode === 'login' ? 'Connexion' : 'Créer un compte'}
-              </Text>
-          }
+            : <Text style={[styles.pillText, { color: c.btnText }]}>
+                {mode === 'login' ? 'Connexion' : 'Créer mon compte'}
+              </Text>}
         </TouchableOpacity>
 
+        {/* Bascule login / register */}
         <TouchableOpacity
-          onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
-          style={styles.switchWrapper}
+          onPress={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
+          style={styles.toggle}
         >
-          <Text style={[styles.switchText, { color: c.muted }]}>
+          <Text style={[styles.toggleText, { color: c.muted }]}>
             {mode === 'login' ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}
-            <Text style={[styles.switchLink, { color: c.text }]}>
-              {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
+            <Text style={{ color: c.text, fontWeight: '600' }}>
+              {mode === 'login' ? "S'inscrire" : 'Se connecter'}
             </Text>
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  inner: { flex: 1, paddingHorizontal: 28, justifyContent: 'center' },
-  logoWrapper: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 40 },
-  logoBox: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  logoEmoji: { fontSize: 18 },
-  brandName: { fontSize: 20, fontWeight: '600' },
-  title: { fontSize: 26, fontWeight: '700', marginBottom: 6 },
-  subtitle: { fontSize: 14, marginBottom: 32 },
-  googleButton: {
-    height: 48, borderWidth: 1, borderRadius: 10,
+  root: { flex: 1 },
+  scroll: { flexGrow: 1, paddingHorizontal: 32, paddingTop: 80, paddingBottom: 48 },
+
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 64 },
+  brandIcon: { fontSize: 18 },
+  brandName: { fontSize: 17, fontWeight: '700', letterSpacing: -0.2 },
+
+  heading: { fontSize: 44, fontWeight: '800', letterSpacing: -1.8, lineHeight: 48, marginBottom: 10 },
+  sub: { fontSize: 15, lineHeight: 22, marginBottom: 44 },
+
+  googleBtn: {
+    height: 52, borderRadius: 26, borderWidth: 1,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 10, marginBottom: 20,
+    gap: 10, marginBottom: 36,
   },
-  googleLetter: { fontSize: 16, fontWeight: '700', color: '#4285F4' },
-  googleButtonText: { fontSize: 15, fontWeight: '500' },
-  separator: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
-  separatorLine: { flex: 1, height: 1 },
-  separatorText: { fontSize: 13 },
+  googleG: { fontSize: 16, fontWeight: '800', color: '#4285F4' },
+  googleLabel: { fontSize: 14, fontWeight: '500' },
+
+  sep: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 36 },
+  sepLine: { flex: 1, height: 1 },
+  sepText: { fontSize: 11, fontWeight: '600', letterSpacing: 0.8 },
+
+  label: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 10 },
   input: {
-    height: 48, borderWidth: 1, borderRadius: 10,
-    paddingHorizontal: 14, fontSize: 15, marginBottom: 14,
+    height: 44, borderBottomWidth: 1,
+    fontSize: 16, paddingBottom: 8, paddingHorizontal: 0,
   },
-  button: { height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
-  buttonText: { fontSize: 15, fontWeight: '600' },
-  switchWrapper: { marginTop: 20, alignItems: 'center' },
-  switchText: { fontSize: 14 },
-  switchLink: { fontWeight: '600' },
-  error: { fontSize: 13, color: '#ef4444', marginBottom: 10 },
+
+  error: { fontSize: 13, color: '#ef4444', marginTop: 16 },
+
+  pill: {
+    height: 56, borderRadius: 28,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  pillText: { fontSize: 15, fontWeight: '700', letterSpacing: 0.2 },
+
+  toggle: { marginTop: 28, alignItems: 'center' },
+  toggleText: { fontSize: 14 },
 });

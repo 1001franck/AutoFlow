@@ -318,10 +318,10 @@ router.get('/google/mobile/callback', async (req: Request, res: Response) => {
 
     setMobileSession(sessionId, { status: 'success', accessToken, email: user.email });
 
-    res.send('<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>✅ Connexion réussie !</h2><p>Vous pouvez retourner sur AutoFlow.</p></body></html>');
+    res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;color:#fff;font-family:-apple-system,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px}.icon{font-size:40px}.title{font-size:18px;font-weight:700;letter-spacing:-.3px}.sub{font-size:13px;color:#444}</style><script>setTimeout(()=>window.close(),800)</script></head><body><div class="icon">⚡</div><p class="title">Connexion réussie</p><p class="sub">Retournez sur AutoFlow</p></body></html>`);
   } catch {
     setMobileSession(sessionId, { status: 'error' });
-    res.send('<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>Erreur</h2><p>Connexion échouée. Fermez cette fenêtre.</p></body></html>');
+    res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}body{background:#000;color:#fff;font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}</style></head><body><p style="color:#555;font-size:14px">Une erreur est survenue.</p></body></html>`);
   }
 });
 
