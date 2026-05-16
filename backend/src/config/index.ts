@@ -43,5 +43,7 @@ export const config = {
 
   google: {
     signinRedirectUri: process.env.GOOGLE_SIGNIN_REDIRECT_URI || 'http://localhost:3000/auth/google/signin/callback',
+    // URI de callback dédiée au flow mobile (polling)
+    mobileCallbackUri: process.env.GOOGLE_MOBILE_CALLBACK_URI || 'http://localhost:3000/auth/google/mobile/callback',
   },
 };

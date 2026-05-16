@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import type { RootStackParamList } from '../../App';
 import api, { setAccessToken } from '../api/client';
-
-WebBrowser.maybeCompleteAuthSession();
-
-const GOOGLE_CLIENT_ID = '504020587203-7dkmhaukeldkh4cpc1rne0u5jbe0mava.apps.googleusercontent.com';
 
 const THEME = {
   light: {
@@ -42,37 +37,60 @@ export function LoginScreen() {
   const c = THEME[scheme === 'dark' ? 'dark' : 'light'];
   const navigation = useNavigation<Nav>();
 
-  const [_request, googleResponse, promptAsync] = Google.useAuthRequest({
-    clientId: GOOGLE_CLIENT_ID,
-  });
-
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Dès que Google répond, on échange le token avec notre backend
-  useEffect(() => {
-    if (googleResponse?.type !== 'success') return;
-    const googleToken = googleResponse.authentication?.accessToken;
-    if (!googleToken) { setError('Connexion Google échouée'); return; }
-
-    setLoading(true);
-    api.post('/auth/google/mobile', { accessToken: googleToken })
-      .then(async ({ data: session }) => {
-        setAccessToken(session.accessToken);
-        await AsyncStorage.setItem('isAuth', '1');
-        await AsyncStorage.setItem('userEmail', session.email);
-        navigation.replace('Dashboard');
-      })
-      .catch(() => setError('Erreur lors de la connexion Google'))
-      .finally(() => setLoading(false));
-  }, [googleResponse]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setError('');
-    promptAsync();
+    setLoading(true);
+    try {
+      // 1. Demande au backend une URL Google + un identifiant de session unique
+      const { data } = await api.get<{ sessionId: string; url: string }>('/auth/google/mobile/init');
+      const { sessionId, url } = data;
+
+      // 2. Ouvre un navigateur in-app sur la page Google Sign-In
+      //    On ne attend pas la fermeture — le polling tourne en parallèle
+      WebBrowser.openBrowserAsync(url).catch(() => {});
+
+      // 3. Poll toutes les 2s pendant 5 minutes max pour récupérer le token
+      for (let i = 0; i < 150; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+
+        const { data: session } = await api.get<{
+          status: 'pending' | 'success' | 'error' | 'expired';
+          accessToken?: string;
+          email?: string;
+        }>(`/auth/google/mobile/poll/${sessionId}`);
+
+        if (session.status === 'success' && session.accessToken) {
+          // Auth réussie — ferme le navigateur et navigue vers le dashboard
+          await WebBrowser.dismissBrowser();
+          setAccessToken(session.accessToken);
+          await AsyncStorage.setItem('isAuth', '1');
+          await AsyncStorage.setItem('userEmail', session.email ?? '');
+          navigation.replace('Dashboard');
+          return;
+        }
+
+        if (session.status === 'error' || session.status === 'expired') {
+          await WebBrowser.dismissBrowser();
+          setError('Erreur lors de la connexion Google');
+          return;
+        }
+        // status === 'pending' → l'utilisateur n'a pas encore terminé, on continue
+      }
+
+      // 5 minutes écoulées sans réponse
+      await WebBrowser.dismissBrowser();
+      setError('Délai expiré, réessayez');
+    } catch {
+      setError('Erreur lors de la connexion Google');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async () => {

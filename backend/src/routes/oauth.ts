@@ -216,6 +216,129 @@ router.post('/google/signin/exchange', async (req: Request, res: Response) => {
   res.json({ accessToken, email: payload.email });
 });
 
+// ── Google Sign-In mobile (flow polling) ──────────────────────────────────────
+// Principe : l'app ouvre un navigateur → Google redirige vers notre backend →
+// le backend stocke le token en mémoire → l'app poll toutes les 2s pour le récupérer.
+// Évite toute dépendance au proxy Expo ou aux schémas URI custom.
+
+// Stockage des sessions OAuth mobile en mémoire (clé = sessionId aléatoire)
+const mobileSessions = new Map<string, {
+  status: 'pending' | 'success' | 'error';
+  accessToken?: string;
+  email?: string;
+}>();
+
+// Enregistre une session et la supprime automatiquement au bout de 10 minutes
+function setMobileSession(
+  sessionId: string,
+  data: { status: 'pending' | 'success' | 'error'; accessToken?: string; email?: string },
+) {
+  mobileSessions.set(sessionId, data);
+  setTimeout(() => mobileSessions.delete(sessionId), 10 * 60 * 1000);
+}
+
+// Client OAuth2 dont l'URI de redirection pointe vers notre callback mobile
+function getMobileOAuth2Client() {
+  return new google.auth.OAuth2(
+    config.gmail.clientId,
+    config.gmail.clientSecret,
+    config.google.mobileCallbackUri,
+  );
+}
+
+// GET /auth/google/mobile/init
+// L'app appelle cette route pour obtenir l'URL Google à ouvrir dans le navigateur
+router.get('/google/mobile/init', (_req: Request, res: Response) => {
+  const sessionId = crypto.randomBytes(16).toString('hex');
+
+  // On démarre la session en "pending" avant même que l'utilisateur se connecte
+  setMobileSession(sessionId, { status: 'pending' });
+
+  // Le sessionId est encodé dans le state JWT pour être retrouvé au callback
+  const state = jwt.sign({ type: 'mobile_signin', sessionId }, config.jwt.secret, { expiresIn: '10m' });
+
+  const url = getMobileOAuth2Client().generateAuthUrl({
+    access_type: 'online',
+    scope: SIGNIN_SCOPES,
+    state,
+  });
+
+  res.json({ sessionId, url });
+});
+
+// GET /auth/google/mobile/callback
+// Google redirige ici après l'auth — on stocke le résultat pour que l'app le récupère via poll
+router.get('/google/mobile/callback', async (req: Request, res: Response) => {
+  const { code, state, error } = req.query as Record<string, string | undefined>;
+
+  // Annulation ou paramètres manquants — on tente de marquer la session en erreur
+  if (error || !code || !state) {
+    try {
+      const decoded = jwt.verify(state ?? '', config.jwt.secret) as { sessionId?: string };
+      if (decoded.sessionId) setMobileSession(decoded.sessionId, { status: 'error' });
+    } catch { /* state invalide, on ignore */ }
+    res.send('<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>Connexion annulée</h2><p>Fermez cette fenêtre.</p></body></html>');
+    return;
+  }
+
+  let sessionId: string;
+  try {
+    const decoded = jwt.verify(state, config.jwt.secret) as { type: string; sessionId: string };
+    sessionId = decoded.sessionId;
+  } catch {
+    res.send('<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>Session expirée</h2><p>Fermez cette fenêtre et réessayez.</p></body></html>');
+    return;
+  }
+
+  try {
+    const oauth2Client = getMobileOAuth2Client();
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const { data: userInfo } = await google.oauth2({ version: 'v2', auth: oauth2Client }).userinfo.get();
+    const email = userInfo.email;
+
+    if (!email) {
+      setMobileSession(sessionId, { status: 'error' });
+      res.send('<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>Erreur</h2><p>Email introuvable. Fermez cette fenêtre.</p></body></html>');
+      return;
+    }
+
+    // Crée le compte si l'utilisateur se connecte pour la première fois via Google
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+      user = await prisma.user.create({ data: { email, password: randomPassword } });
+    }
+
+    // Génère l'access token — l'app le récupèrera via poll dans les prochaines secondes
+    const accessToken = jwt.sign({ userId: user.id }, config.jwt.secret, {
+      expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'],
+    });
+
+    setMobileSession(sessionId, { status: 'success', accessToken, email: user.email });
+
+    res.send('<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>✅ Connexion réussie !</h2><p>Vous pouvez retourner sur AutoFlow.</p></body></html>');
+  } catch {
+    setMobileSession(sessionId, { status: 'error' });
+    res.send('<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h2>Erreur</h2><p>Connexion échouée. Fermez cette fenêtre.</p></body></html>');
+  }
+});
+
+// GET /auth/google/mobile/poll/:sessionId
+// Appelé par l'app toutes les 2s pour savoir si l'auth est terminée
+router.get('/google/mobile/poll/:sessionId', (req: Request, res: Response) => {
+  const session = mobileSessions.get(req.params['sessionId'] as string);
+
+  // Session inconnue ou expirée (supprimée après 10min)
+  if (!session) {
+    res.status(404).json({ status: 'expired' });
+    return;
+  }
+
+  res.json(session);
+});
+
 // POST /auth/google/mobile — vérifie un access token Google depuis l'app mobile
 router.post('/google/mobile', async (req: Request, res: Response) => {
   const { accessToken: googleToken } = req.body as { accessToken?: string };
