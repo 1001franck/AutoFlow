@@ -51,6 +51,19 @@ export function LoginScreen() {
           autoComplete="password"
         />
 
+        {/* Bouton Google */}
+        <TouchableOpacity style={styles.googleButton} activeOpacity={0.85}>
+          <Text style={styles.googleLetter}>G</Text>
+          <Text style={styles.googleButtonText}>Continuer avec Google</Text>
+        </TouchableOpacity>
+
+        {/* Separateur */}
+        <View style={styles.separator}>
+          <View style={styles.separatorLine} />
+          <Text style={styles.separatorText}>ou</Text>
+          <View style={styles.separatorLine} />
+        </View>
+
         <TouchableOpacity style={styles.button} activeOpacity={0.85}>
           <Text style={styles.buttonText}>Connexion</Text>
         </TouchableOpacity>
@@ -112,6 +125,43 @@ const styles = StyleSheet.create({
     color: '#000000',
     backgroundColor: '#f9fafb',
     marginBottom: 14,
+  },
+  googleButton: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#ffffff',
+    marginBottom: 20,
+  },
+  googleLetter: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#4285F4',
+  },
+  googleButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e5e7eb',
+  },
+  separatorText: {
+    fontSize: 13,
+    color: '#9ca3af',
   },
   button: {
     height: 48,
