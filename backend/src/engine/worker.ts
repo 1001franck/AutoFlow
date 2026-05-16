@@ -129,4 +129,21 @@ async function processJob(job: Job<WorkflowJobData>) {
     status: globalStatus,
     durationMs: finishedRun.durationMs,
   });
+
+  // Crée une notification persistante en cas d'échec ou d'exécution partielle
+  if (globalStatus === 'failed' || globalStatus === 'partial') {
+    await prisma.notification.create({
+      data: {
+        userId: workflow.userId,
+        type: 'run_failed',
+        title: workflow.name,
+        message: globalStatus === 'failed'
+          ? 'Toutes les étapes ont échoué.'
+          : 'Certaines étapes ont échoué.',
+        runId: finishedRun.id,
+      },
+    });
+
+    emitToUser(workflow.userId, 'notification:new', { unread: true });
+  }
 }
