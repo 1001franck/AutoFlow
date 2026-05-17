@@ -12,9 +12,9 @@ router.use(requireAuth);
 router.get('/stats', async (req, res: Response) => {
   const userId = (req as unknown as AuthRequest).userId;
 
-  // Plage des 7 derniers jours pour le graphique d'activité
+  const days = Math.min(parseInt(req.query['days'] as string) || 7, 90);
   const since = new Date();
-  since.setDate(since.getDate() - 7);
+  since.setDate(since.getDate() - days);
 
   const [totalRuns, successRuns, activeWorkflows, runsLast7Days, topWorkflows] = await Promise.all([
     prisma.run.count({ where: { workflow: { userId } } }),
