@@ -26,7 +26,7 @@ const THEME = {
 
 interface Credential { id: string; label: string; connector: string; }
 interface StepForm { uid: string; type: string; label: string; config: Record<string, string>; }
-type FieldDef = { key: string; label: string; placeholder: string; credential?: string; multiline?: boolean };
+type FieldDef = { key: string; label: string; placeholder: string; credential?: string; multiline?: boolean; required?: boolean };
 
 const TRIGGER_TYPES = [
   { type: 'webhook' },
@@ -45,10 +45,10 @@ const ACTION_TYPES = [
 
 function getTriggerFields(t: Tr): Record<string, FieldDef[]> {
   return {
-    cron:       [{ key: 'expression', label: t.fieldCronExpr, placeholder: '0 9 * * 1-5' }],
+    cron:       [{ key: 'expression', label: t.fieldCronExpr, placeholder: '0 9 * * 1-5', required: true }],
     gmail_poll: [
-      { key: 'credentialId', label: t.fieldGmailAccount, placeholder: '', credential: 'gmail' },
-      { key: 'label',        label: t.fieldGmailLabel,   placeholder: 'INBOX' },
+      { key: 'credentialId', label: t.fieldGmailAccount, placeholder: '', credential: 'gmail', required: true },
+      { key: 'label',        label: t.fieldGmailLabel,   placeholder: 'INBOX', required: true },
     ],
     webhook: [],
   };
@@ -57,32 +57,32 @@ function getTriggerFields(t: Tr): Record<string, FieldDef[]> {
 function getActionFields(t: Tr): Record<string, FieldDef[]> {
   return {
     'discord.send_message': [
-      { key: 'credentialId', label: t.fieldDiscordAccount, placeholder: '', credential: 'discord' },
-      { key: 'channelId',    label: t.fieldChannelId,      placeholder: '123456789' },
-      { key: 'message',      label: t.fieldMessage,        placeholder: '{{trigger.body.name}}' },
+      { key: 'credentialId', label: t.fieldDiscordAccount, placeholder: '', credential: 'discord', required: true },
+      { key: 'channelId',    label: t.fieldChannelId,      placeholder: '123456789', required: true },
+      { key: 'message',      label: t.fieldMessage,        placeholder: '{{trigger.body.name}}', required: true },
     ],
     'telegram.send_message': [
-      { key: 'credentialId', label: t.fieldTelegramAccount, placeholder: '', credential: 'telegram' },
-      { key: 'chatId',       label: t.fieldChatId,          placeholder: '-1001234567' },
-      { key: 'message',      label: t.fieldMessage,         placeholder: '{{trigger.body.name}}' },
+      { key: 'credentialId', label: t.fieldTelegramAccount, placeholder: '', credential: 'telegram', required: true },
+      { key: 'chatId',       label: t.fieldChatId,          placeholder: '-1001234567', required: true },
+      { key: 'message',      label: t.fieldMessage,         placeholder: '{{trigger.body.name}}', required: true },
     ],
     'gmail.send_email': [
-      { key: 'credentialId', label: t.fieldGmailAccount, placeholder: '', credential: 'gmail' },
-      { key: 'to',           label: t.fieldTo,           placeholder: 'user@example.com' },
-      { key: 'subject',      label: t.fieldSubject,      placeholder: '...' },
+      { key: 'credentialId', label: t.fieldGmailAccount, placeholder: '', credential: 'gmail', required: true },
+      { key: 'to',           label: t.fieldTo,           placeholder: 'user@example.com', required: true },
+      { key: 'subject',      label: t.fieldSubject,      placeholder: '...', required: true },
       { key: 'body',         label: t.fieldBody,         placeholder: '...', multiline: true },
     ],
     'notion.create_page': [
-      { key: 'credentialId', label: t.fieldNotionAccount, placeholder: '', credential: 'notion' },
-      { key: 'databaseId',   label: t.fieldDatabaseId,   placeholder: 'abc123...' },
+      { key: 'credentialId', label: t.fieldNotionAccount, placeholder: '', credential: 'notion', required: true },
+      { key: 'databaseId',   label: t.fieldDatabaseId,   placeholder: 'abc123...', required: true },
       { key: 'title',        label: t.fieldTitle,        placeholder: '{{trigger.body.name}}' },
     ],
     'webhook.http_post': [
-      { key: 'url',  label: t.fieldUrl,     placeholder: 'https://example.com/webhook' },
+      { key: 'url',  label: t.fieldUrl,      placeholder: 'https://example.com/webhook', required: true },
       { key: 'body', label: t.fieldJsonBody, placeholder: '{"key": "value"}', multiline: true },
     ],
     'delay.wait': [
-      { key: 'ms', label: t.fieldDuration, placeholder: '1000' },
+      { key: 'ms', label: t.fieldDuration, placeholder: '1000', required: true },
     ],
   };
 }
@@ -94,19 +94,23 @@ type CredPicker = { stepUid: string; fieldKey: string; connector: string } | nul
 // ─── Champ de formulaire ──────────────────────────────────────────────────────
 
 function Field({
-  f, value, c, onChangeText, onCredentialPress,
+  f, value, c, error, onChangeText, onCredentialPress,
 }: {
-  f: FieldDef; value: string; c: C;
+  f: FieldDef; value: string; c: C; error?: string;
   onChangeText: (v: string) => void;
   onCredentialPress: () => void;
 }) {
   const { t } = useLang();
+  const hasError = !!error;
   return (
     <View style={styles.fieldWrap}>
       <Text style={[styles.fieldLabel, { color: c.muted }]}>{f.label}</Text>
       {f.credential ? (
         <TouchableOpacity
-          style={[styles.credBtn, { backgroundColor: c.input, borderColor: c.border }]}
+          style={[
+            styles.credBtn,
+            { backgroundColor: c.input, borderColor: hasError ? '#ef4444' : c.border },
+          ]}
           onPress={onCredentialPress}
           activeOpacity={0.7}
         >
@@ -119,7 +123,7 @@ function Field({
         <TextInput
           style={[
             styles.input,
-            { backgroundColor: c.input, borderColor: c.border, color: c.text },
+            { backgroundColor: c.input, borderColor: hasError ? '#ef4444' : c.border, color: c.text },
             f.multiline && styles.inputMulti,
           ]}
           placeholder={f.placeholder}
@@ -133,6 +137,7 @@ function Field({
           textAlignVertical={f.multiline ? 'top' : 'center'}
         />
       )}
+      {hasError && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
@@ -164,6 +169,7 @@ export function WorkflowCreateScreen() {
   const [saving, setSaving] = useState(false);
   const [showStepPicker, setShowStepPicker] = useState(false);
   const [credPicker, setCredPicker] = useState<CredPicker>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     api.get<Credential[]>('/credentials').then(({ data }) => setCredentials(data)).catch(() => {});
@@ -186,18 +192,43 @@ export function WorkflowCreateScreen() {
 
   const selectCredential = (credId: string, credLabel: string) => {
     if (!credPicker) return;
+    const errKey = credPicker.stepUid === '__trigger__'
+      ? `trigger.${credPicker.fieldKey}`
+      : `step.${credPicker.stepUid}.${credPicker.fieldKey}`;
+    setErrors(e => ({ ...e, [errKey]: '' }));
     if (credPicker.stepUid === '__trigger__') {
       setTriggerConfig(prev => ({ ...prev, [credPicker.fieldKey]: credId }));
     } else {
       updateStepConfig(credPicker.stepUid, credPicker.fieldKey, credLabel);
-      // stocke l'ID réel dans un champ interne pour l'envoi
       updateStepConfig(credPicker.stepUid, `${credPicker.fieldKey}__id`, credId);
     }
     setCredPicker(null);
   };
 
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!name.trim()) errs['name'] = t.fieldRequired;
+
+    const tFields = TRIGGER_FIELDS[triggerType] ?? [];
+    tFields.filter(f => f.required).forEach(f => {
+      const val = f.credential ? triggerConfig[f.key] : triggerConfig[f.key];
+      if (!val?.trim()) errs[`trigger.${f.key}`] = t.fieldRequired;
+    });
+
+    steps.forEach(step => {
+      const sFields = ACTION_FIELDS[step.type] ?? [];
+      sFields.filter(f => f.required).forEach(f => {
+        const val = f.credential ? step.config[`${f.key}__id`] : step.config[f.key];
+        if (!val?.trim()) errs[`step.${step.uid}.${f.key}`] = t.fieldRequired;
+      });
+    });
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!validate()) return;
     setSaving(true);
     try {
       await api.post('/workflows', {
@@ -238,7 +269,11 @@ export function WorkflowCreateScreen() {
         f={f}
         c={c}
         value={triggerConfig[f.key] ?? ''}
-        onChangeText={v => setTriggerConfig(prev => ({ ...prev, [f.key]: v }))}
+        error={errors[`trigger.${f.key}`]}
+        onChangeText={v => {
+          setTriggerConfig(prev => ({ ...prev, [f.key]: v }));
+          setErrors(e => ({ ...e, [`trigger.${f.key}`]: '' }));
+        }}
         onCredentialPress={() => setCredPicker({ stepUid: '__trigger__', fieldKey: f.key, connector: f.credential! })}
       />
     ));
@@ -275,12 +310,16 @@ export function WorkflowCreateScreen() {
           <View style={styles.section}>
             <Text style={[styles.sectionLabel, { color: c.muted }]}>{t.nameLabel}</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: c.input, borderColor: c.border, color: c.text }]}
+              style={[
+                styles.input,
+                { backgroundColor: c.input, borderColor: errors['name'] ? '#ef4444' : c.border, color: c.text },
+              ]}
               value={name}
-              onChangeText={setName}
+              onChangeText={v => { setName(v); setErrors(e => ({ ...e, name: '' })); }}
               placeholderTextColor={c.sub}
               autoCorrect={false}
             />
+            {errors['name'] ? <Text style={styles.errorText}>{errors['name']}</Text> : null}
           </View>
 
           {/* Déclencheur */}
@@ -345,7 +384,11 @@ export function WorkflowCreateScreen() {
                             ? (credentials.find(cr => cr.id === step.config[`${f.key}__id`])?.label ?? step.config[f.key] ?? '')
                             : (step.config[f.key] ?? '')
                           }
-                          onChangeText={v => updateStepConfig(step.uid, f.key, v)}
+                          error={errors[`step.${step.uid}.${f.key}`]}
+                          onChangeText={v => {
+                            updateStepConfig(step.uid, f.key, v);
+                            setErrors(e => ({ ...e, [`step.${step.uid}.${f.key}`]: '' }));
+                          }}
                           onCredentialPress={() => setCredPicker({ stepUid: step.uid, fieldKey: f.key, connector: f.credential! })}
                         />
                       ))}
@@ -505,4 +548,5 @@ const styles = StyleSheet.create({
   sheetRowText: { fontSize: 14 },
   sheetEmpty: { padding: 24 },
   sheetEmptyText: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  errorText: { fontSize: 11, color: '#ef4444', marginTop: 4 },
 });

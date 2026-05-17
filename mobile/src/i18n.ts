@@ -61,6 +61,9 @@ export const T = {
     tabNotifs: 'Notifs',
     tabAccount: 'Compte',
 
+    // Validation
+    fieldRequired: 'Ce champ est requis',
+
     // Types d'actions
     actionDiscord: 'Discord — Message',
     actionTelegram: 'Telegram — Message',
@@ -147,6 +150,9 @@ export const T = {
     tabServices: 'Services',
     tabNotifs: 'Notifs',
     tabAccount: 'Account',
+
+    // Validation
+    fieldRequired: 'This field is required',
 
     // Types d'actions
     actionDiscord: 'Discord — Message',
