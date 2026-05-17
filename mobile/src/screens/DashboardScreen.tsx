@@ -54,53 +54,77 @@ function buildChartData(points: DayPoint[], days: number) {
   });
 }
 
-const DASH = 2000; // valeur supérieure à toute longueur de chemin possible
+const DASH = 2000;
 
-// Graphique area SVG avec animation "tracé" au chargement
-function AreaChart({ data, color }: { data: number[]; color: string }) {
-  const W = Dimensions.get('window').width - 96;
-  const H = 100;
+function buildPath(data: number[], W: number, H: number) {
   const max = Math.max(...data, 1);
-
   const coords = data.map((v, i) => ({
     x: data.length > 1 ? (i / (data.length - 1)) * W : W / 2,
     y: H - 8 - (v / max) * (H - 16),
   }));
-
   const line = coords.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const area = `${line} L${W},${H} L0,${H} Z`;
+  return { line, area };
+}
 
-  const offset = useRef(new Animated.Value(DASH)).current;
-  useEffect(() => {
+function AreaChart({ data, color }: { data: number[]; color: string }) {
+  const W = Dimensions.get('window').width - 96;
+  const H = 100;
+
+  const [displayed, setDisplayed] = useState(data);
+  const opacity = useRef(new Animated.Value(1)).current;
+  const offset  = useRef(new Animated.Value(DASH)).current;
+  const isFirst = useRef(true);
+
+  const traceIn = useCallback(() => {
     offset.setValue(DASH);
     Animated.timing(offset, {
-      toValue: 0,
-      duration: 1200,
+      toValue: 0, duration: 1200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
+  }, [offset]);
+
+  useEffect(() => {
+    if (isFirst.current) {
+      isFirst.current = false;
+      traceIn();
+      return;
+    }
+    Animated.timing(opacity, {
+      toValue: 0, duration: 160,
+      useNativeDriver: true,
+    }).start(() => {
+      setDisplayed(data);
+      Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+      traceIn();
+    });
   }, [data]);
 
+  const { line, area } = buildPath(displayed, W, H);
+
   return (
-    <Svg width={W} height={H}>
-      <Defs>
-        <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0%" stopColor={color} stopOpacity={0.18} />
-          <Stop offset="100%" stopColor={color} stopOpacity={0} />
-        </SvgGradient>
-      </Defs>
-      <Path d={area} fill="url(#areaGrad)" />
-      <AnimatedPath
-        d={line}
-        stroke={color}
-        strokeWidth={1.8}
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeDasharray={`${DASH}`}
-        strokeDashoffset={offset as unknown as string}
-      />
-    </Svg>
+    <Animated.View style={{ opacity }}>
+      <Svg width={W} height={H}>
+        <Defs>
+          <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%" stopColor={color} stopOpacity={0.18} />
+            <Stop offset="100%" stopColor={color} stopOpacity={0} />
+          </SvgGradient>
+        </Defs>
+        <Path d={area} fill="url(#areaGrad)" />
+        <AnimatedPath
+          d={line}
+          stroke={color}
+          strokeWidth={1.8}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={`${DASH}`}
+          strokeDashoffset={offset as unknown as string}
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 
