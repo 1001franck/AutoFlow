@@ -170,6 +170,7 @@ export function WorkflowCreateScreen() {
   const [showStepPicker, setShowStepPicker] = useState(false);
   const [credPicker, setCredPicker] = useState<CredPicker>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     api.get<Credential[]>('/credentials').then(({ data }) => setCredentials(data)).catch(() => {});
@@ -247,8 +248,9 @@ export function WorkflowCreateScreen() {
         }),
       });
       navigation.goBack();
-    } catch {}
-    finally { setSaving(false); }
+    } catch {
+      setSaveError(t.saveError);
+    } finally { setSaving(false); }
   };
 
   const filteredCreds = credPicker
@@ -299,6 +301,13 @@ export function WorkflowCreateScreen() {
           }
         </TouchableOpacity>
       </View>
+
+      {saveError ? (
+        <View style={styles.errorBanner}>
+          <Ionicons name="alert-circle-outline" size={16} color="#ef4444" />
+          <Text style={styles.errorBannerText}>{saveError}</Text>
+        </View>
+      ) : null}
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -549,4 +558,11 @@ const styles = StyleSheet.create({
   sheetEmpty: { padding: 24 },
   sheetEmptyText: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
   errorText: { fontSize: 11, color: '#ef4444', marginTop: 4 },
+
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: '#fee2e2',
+  },
+  errorBannerText: { fontSize: 13, color: '#ef4444', flex: 1 },
 });
