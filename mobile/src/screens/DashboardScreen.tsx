@@ -9,6 +9,7 @@ import {
   Dimensions,
   Animated,
   Easing,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
@@ -40,14 +41,15 @@ interface DashboardStats {
   topWorkflows: TopWorkflow[];
 }
 
-// Construit les 7 derniers jours et fusionne avec les données réelles (même logique que le web)
-function buildChartData(points: DayPoint[]) {
+function buildChartData(points: DayPoint[], days: number) {
   const map = new Map(points.map((p) => [p.date, p.count]));
-  return Array.from({ length: 7 }, (_, i) => {
+  return Array.from({ length: days }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
+    d.setDate(d.getDate() - (days - 1 - i));
     const key = d.toISOString().slice(0, 10);
-    const label = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+    const label = days <= 7
+      ? d.toLocaleDateString('fr-FR', { weekday: 'short' })
+      : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     return { label, runs: map.get(key) ?? 0 };
   });
 }
@@ -120,10 +122,11 @@ export function DashboardScreen() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
+  const [period, setPeriod] = useState<7 | 30>(7);
 
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (days: 7 | 30 = 7) => {
     try {
-      const { data } = await api.get<DashboardStats>('/dashboard/stats');
+      const { data } = await api.get<DashboardStats>(`/dashboard/stats?days=${days}`);
       setStats(data);
     } catch {
       // Erreur silencieuse — les données restent vides
@@ -134,10 +137,15 @@ export function DashboardScreen() {
 
   useEffect(() => {
     AsyncStorage.getItem('userEmail').then((v) => setEmail(v ?? ''));
-    fetchStats();
+    fetchStats(period);
   }, [fetchStats]);
 
-  const chartData = buildChartData(stats?.runsLast7Days ?? []);
+  const handlePeriod = (p: 7 | 30) => {
+    setPeriod(p);
+    fetchStats(p);
+  };
+
+  const chartData = buildChartData(stats?.runsLast7Days ?? [], period);
   const chartValues = chartData.map((d) => d.runs);
   const chartColor = scheme === 'dark' ? '#ffffff' : '#0a0a0a';
 
@@ -174,15 +182,32 @@ export function DashboardScreen() {
 
           {/* Graphique d'activité */}
           <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border }]}>
-            <Text style={[styles.cardTitle, { color: c.text }]}>{t.last7Days}</Text>
+            <View style={styles.chartHeader}>
+              <Text style={[styles.cardTitle, { color: c.text, marginBottom: 0 }]}>{t.last7Days}</Text>
+              <View style={[styles.periodToggle, { borderColor: c.border }]}>
+                {([7, 30] as const).map((p) => (
+                  <TouchableOpacity
+                    key={p}
+                    onPress={() => handlePeriod(p)}
+                    style={[styles.periodBtn, period === p && { backgroundColor: c.text }]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.periodBtnText, { color: period === p ? c.bg : c.muted }]}>
+                      {p}j
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
             <View style={styles.chartWrap}>
               <AreaChart data={chartValues} color={chartColor} />
             </View>
-            {/* Labels des jours sous le graphique */}
             <View style={styles.chartLabels}>
-              {chartData.map((d, i) => (
-                <Text key={i} style={[styles.chartLabel, { color: c.sub }]}>{d.label}</Text>
-              ))}
+              {chartData
+                .filter((_, i) => period === 7 || i % 5 === 0 || i === chartData.length - 1)
+                .map((d, i) => (
+                  <Text key={i} style={[styles.chartLabel, { color: c.sub }]}>{d.label}</Text>
+                ))}
             </View>
           </View>
 
@@ -254,6 +279,15 @@ const styles = StyleSheet.create({
   cardNoPad: { padding: 0 },
   cardTitle: { fontSize: 13, fontWeight: '600', marginBottom: 16 },
   cardTitlePad: { padding: 20, paddingBottom: 16, borderBottomWidth: 1, marginBottom: 0 },
+
+  chartHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16,
+  },
+  periodToggle: {
+    flexDirection: 'row', borderWidth: 1, borderRadius: 8, overflow: 'hidden',
+  },
+  periodBtn: { paddingHorizontal: 12, paddingVertical: 5 },
+  periodBtnText: { fontSize: 12, fontWeight: '600' },
 
   chartWrap: { marginBottom: 10 },
   chartLabels: { flexDirection: 'row', justifyContent: 'space-between' },
