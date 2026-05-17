@@ -41,6 +41,15 @@ export const T = {
 
     // Services
     services: 'Services',
+    servicesSubtitle: 'Connecteurs disponibles',
+    serviceConnected: (n: number) => `${n} compte${n > 1 ? 's' : ''} connecté${n > 1 ? 's' : ''}`,
+    serviceNotConnected: 'Non connecté',
+    serviceManageWeb: 'Gérer depuis le web',
+    serviceGmailDesc: 'Envoyer des emails et surveiller votre boîte.',
+    serviceDiscordDesc: 'Envoyer des messages dans vos serveurs.',
+    serviceTelegramDesc: 'Envoyer des messages à vos bots.',
+    serviceNotionDesc: 'Créer des pages dans vos bases de données.',
+    serviceWebhookDesc: 'Appeler des URLs HTTP externes.',
 
     // Création workflow
     newWorkflow: 'Nouveau workflow',
@@ -145,6 +154,15 @@ export const T = {
 
     // Services
     services: 'Services',
+    servicesSubtitle: 'Available connectors',
+    serviceConnected: (n: number) => `${n} account${n > 1 ? 's' : ''} connected`,
+    serviceNotConnected: 'Not connected',
+    serviceManageWeb: 'Manage from the web',
+    serviceGmailDesc: 'Send emails and monitor your inbox.',
+    serviceDiscordDesc: 'Send messages in your servers.',
+    serviceTelegramDesc: 'Send messages to your bots.',
+    serviceNotionDesc: 'Create pages in your databases.',
+    serviceWebhookDesc: 'Call external HTTP URLs.',
 
     // Création workflow
     newWorkflow: 'New workflow',
