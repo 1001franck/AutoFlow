@@ -42,11 +42,11 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function WorkflowRow({
   wf, c, isLast, toggling, running,
-  onToggle, onRun, onDelete,
+  onToggle, onRun, onDelete, onViewRuns,
 }: {
   wf: Workflow; c: C; isLast: boolean;
   toggling: boolean; running: boolean;
-  onToggle: () => void; onRun: () => void; onDelete: () => void;
+  onToggle: () => void; onRun: () => void; onDelete: () => void; onViewRuns: () => void;
 }) {
   const { t } = useLang();
   const triggerIcon = TRIGGER_ICON[wf.triggerType] ?? 'flash-outline';
@@ -56,16 +56,18 @@ function WorkflowRow({
 
   return (
     <View style={[styles.row, { borderBottomColor: c.border }, isLast && styles.rowLast]}>
-      <View style={[styles.iconWrap, { backgroundColor: wf.active ? '#16a34a18' : `${c.border}60` }]}>
-        <Ionicons name={triggerIcon} size={16} color={wf.active ? '#16a34a' : c.muted} />
-      </View>
+      <TouchableOpacity style={styles.rowLeft} onPress={onViewRuns} activeOpacity={0.7}>
+        <View style={[styles.iconWrap, { backgroundColor: wf.active ? '#16a34a18' : `${c.border}60` }]}>
+          <Ionicons name={triggerIcon} size={16} color={wf.active ? '#16a34a' : c.muted} />
+        </View>
 
-      <View style={styles.rowCenter}>
-        <Text style={[styles.wfName, { color: c.text }]} numberOfLines={1}>{wf.name}</Text>
-        <Text style={[styles.wfMeta, { color: c.sub }]}>
-          {triggerLabel[wf.triggerType] ?? wf.triggerType} · {t.stepsCount(wf._count.steps)} · {t.runsCount(wf._count.runs)}
-        </Text>
-      </View>
+        <View style={styles.rowCenter}>
+          <Text style={[styles.wfName, { color: c.text }]} numberOfLines={1}>{wf.name}</Text>
+          <Text style={[styles.wfMeta, { color: c.sub }]}>
+            {triggerLabel[wf.triggerType] ?? wf.triggerType} · {t.stepsCount(wf._count.steps)} · {t.runsCount(wf._count.runs)}
+          </Text>
+        </View>
+      </TouchableOpacity>
 
       <View style={styles.actions}>
         <View style={[styles.badge, { backgroundColor: wf.active ? '#16a34a20' : `${c.border}80` }]}>
@@ -95,6 +97,7 @@ function WorkflowRow({
     </View>
   );
 }
+
 
 export function WorkflowsScreen() {
   const scheme = useColorScheme();
@@ -212,6 +215,7 @@ export function WorkflowsScreen() {
                 onToggle={() => handleToggle(wf)}
                 onRun={() => handleRun(wf)}
                 onDelete={() => handleDelete(wf)}
+                onViewRuns={() => navigation.navigate('WorkflowRuns', { workflowId: wf.id, workflowName: wf.name })}
               />
             ))}
           </View>
@@ -257,6 +261,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
 
+  rowLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },
   rowCenter: { flex: 1, minWidth: 0 },
   wfName: { fontSize: 14, fontWeight: '500', marginBottom: 3 },
   wfMeta: { fontSize: 11 },

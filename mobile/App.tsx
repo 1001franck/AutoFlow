@@ -8,6 +8,8 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { WorkflowsScreen } from './src/screens/WorkflowsScreen';
 import { WorkflowCreateScreen } from './src/screens/WorkflowCreateScreen';
+import { RunsScreen } from './src/screens/RunsScreen';
+import { RunDetailScreen } from './src/screens/RunDetailScreen';
 import { ServicesScreen } from './src/screens/ServicesScreen';
 import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
@@ -16,6 +18,8 @@ export type RootStackParamList = {
   Login: undefined;
   Main: undefined;
   WorkflowCreate: undefined;
+  WorkflowRuns: { workflowId: string; workflowName: string };
+  RunDetail: { runId: string };
 };
 
 export type TabParamList = {
@@ -79,6 +83,8 @@ export default function App() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Main" component={MainTabs} />
           <Stack.Screen name="WorkflowCreate" component={WorkflowCreateScreen} />
+          <Stack.Screen name="WorkflowRuns"  component={RunsScreen} />
+          <Stack.Screen name="RunDetail"     component={RunDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </LanguageProvider>

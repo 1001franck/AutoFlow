@@ -63,6 +63,17 @@ export const T = {
     tabNotifs: 'Notifs',
     tabAccount: 'Compte',
 
+    // Runs
+    runsTitle: 'Exécutions',
+    noRuns: 'Aucune exécution',
+    runSuccess: 'Succès',
+    runFailed: 'Échoué',
+    runRunning: 'En cours',
+    runPartial: 'Partiel',
+    runSkipped: 'Ignoré',
+    runDuration: 'Durée',
+    runStartedAt: 'Démarré le',
+
     // Validation
     fieldRequired: 'Ce champ est requis',
     saveError: 'Une erreur est survenue. Vérifiez votre connexion et réessayez.',
@@ -155,6 +166,17 @@ export const T = {
     tabServices: 'Services',
     tabNotifs: 'Notifs',
     tabAccount: 'Account',
+
+    // Runs
+    runsTitle: 'Runs',
+    noRuns: 'No runs yet',
+    runSuccess: 'Success',
+    runFailed: 'Failed',
+    runRunning: 'Running',
+    runPartial: 'Partial',
+    runSkipped: 'Skipped',
+    runDuration: 'Duration',
+    runStartedAt: 'Started at',
 
     // Validation
     fieldRequired: 'This field is required',
