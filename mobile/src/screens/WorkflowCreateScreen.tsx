@@ -185,6 +185,17 @@ export function WorkflowCreateScreen() {
     setSteps(prev => prev.filter(s => s.uid !== uid));
   }, []);
 
+  const moveStep = useCallback((uid: string, dir: -1 | 1) => {
+    setSteps(prev => {
+      const idx = prev.findIndex(s => s.uid === uid);
+      const next = idx + dir;
+      if (next < 0 || next >= prev.length) return prev;
+      const arr = [...prev];
+      [arr[idx], arr[next]] = [arr[next], arr[idx]];
+      return arr;
+    });
+  }, []);
+
   const updateStepConfig = useCallback((uid: string, key: string, value: string) => {
     setSteps(prev => prev.map(s =>
       s.uid === uid ? { ...s, config: { ...s.config, [key]: value } } : s
@@ -377,6 +388,12 @@ export function WorkflowCreateScreen() {
                       <Text style={[styles.stepBadgeText, { color: c.muted }]}>{i + 1}</Text>
                     </View>
                     <Text style={[styles.stepName, { color: c.text }]} numberOfLines={1}>{step.label}</Text>
+                    <TouchableOpacity onPress={() => moveStep(step.uid, -1)} style={styles.removeBtn} activeOpacity={0.7} disabled={i === 0}>
+                      <Ionicons name="chevron-up" size={17} color={i === 0 ? c.border : c.muted} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => moveStep(step.uid, 1)} style={styles.removeBtn} activeOpacity={0.7} disabled={i === steps.length - 1}>
+                      <Ionicons name="chevron-down" size={17} color={i === steps.length - 1 ? c.border : c.muted} />
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => removeStep(step.uid)} style={styles.removeBtn} activeOpacity={0.7}>
                       <Ionicons name="close" size={17} color={c.muted} />
                     </TouchableOpacity>
