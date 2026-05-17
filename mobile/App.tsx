@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { LanguageProvider, useLang } from './src/contexts/LanguageContext';
+import { registerPushToken } from './src/utils/pushNotifications';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,6 +78,8 @@ function MainTabs() {
 }
 
 export default function App() {
+  useEffect(() => { registerPushToken(); }, []);
+
   return (
     <LanguageProvider>
       <NavigationContainer>
