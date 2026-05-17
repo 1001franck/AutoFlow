@@ -13,8 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/client';
 import { useLang } from '../contexts/LanguageContext';
@@ -54,15 +52,24 @@ function buildChartData(points: DayPoint[], days: number) {
   });
 }
 
-const DASH = 2000;
-
 function buildPath(data: number[], W: number, H: number) {
   const max = Math.max(...data, 1);
   const coords = data.map((v, i) => ({
     x: data.length > 1 ? (i / (data.length - 1)) * W : W / 2,
     y: H - 8 - (v / max) * (H - 16),
   }));
-  const line = coords.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  if (coords.length === 0) return { line: '', area: '' };
+
+  // Courbe bezier cubique lisse — même rendu que type="monotone" sur le web
+  let line = `M${coords[0].x.toFixed(1)},${coords[0].y.toFixed(1)}`;
+  for (let i = 1; i < coords.length; i++) {
+    const p = coords[i - 1];
+    const c = coords[i];
+    const cpX = ((p.x + c.x) / 2).toFixed(1);
+    line += ` C${cpX},${p.y.toFixed(1)} ${cpX},${c.y.toFixed(1)} ${c.x.toFixed(1)},${c.y.toFixed(1)}`;
+  }
+
   const area = `${line} L${W},${H} L0,${H} Z`;
   return { line, area };
 }
@@ -70,41 +77,23 @@ function buildPath(data: number[], W: number, H: number) {
 function AreaChart({ data, color }: { data: number[]; color: string }) {
   const W = Dimensions.get('window').width - 96;
   const H = 100;
+  // Animated.View overflow:hidden — width glisse de 0 → W, révèle courbe + fill ensemble
+  const clipW = useRef(new Animated.Value(0)).current;
 
-  const [displayed, setDisplayed] = useState(data);
-  const opacity = useRef(new Animated.Value(1)).current;
-  const offset  = useRef(new Animated.Value(DASH)).current;
-  const isFirst = useRef(true);
-
-  const traceIn = useCallback(() => {
-    offset.setValue(DASH);
-    Animated.timing(offset, {
-      toValue: 0, duration: 1200,
+  useEffect(() => {
+    clipW.setValue(0);
+    Animated.timing(clipW, {
+      toValue: W,
+      duration: 1200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [offset]);
-
-  useEffect(() => {
-    if (isFirst.current) {
-      isFirst.current = false;
-      traceIn();
-      return;
-    }
-    Animated.timing(opacity, {
-      toValue: 0, duration: 160,
-      useNativeDriver: true,
-    }).start(() => {
-      setDisplayed(data);
-      Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
-      traceIn();
-    });
   }, [data]);
 
-  const { line, area } = buildPath(displayed, W, H);
+  const { line, area } = buildPath(data, W, H);
 
   return (
-    <Animated.View style={{ opacity }}>
+    <Animated.View style={{ width: clipW, overflow: 'hidden' }}>
       <Svg width={W} height={H}>
         <Defs>
           <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -113,15 +102,13 @@ function AreaChart({ data, color }: { data: number[]; color: string }) {
           </SvgGradient>
         </Defs>
         <Path d={area} fill="url(#areaGrad)" />
-        <AnimatedPath
+        <Path
           d={line}
           stroke={color}
           strokeWidth={1.8}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeDasharray={`${DASH}`}
-          strokeDashoffset={offset as unknown as string}
         />
       </Svg>
     </Animated.View>
