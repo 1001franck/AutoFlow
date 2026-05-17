@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,19 +7,16 @@ import {
   ActivityIndicator,
   useColorScheme,
   Dimensions,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/client';
+import { useLang } from '../contexts/LanguageContext';
 
 // Même palette que le web et le LoginScreen
 const THEME = {
@@ -71,14 +68,16 @@ function AreaChart({ data, color }: { data: number[]; color: string }) {
   const line = coords.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const area = `${line} L${W},${H} L0,${H} Z`;
 
-  // strokeDashoffset part de DASH (invisible) et descend à 0 (tracé complet)
-  const offset = useSharedValue(DASH);
+  const offset = useRef(new Animated.Value(DASH)).current;
   useEffect(() => {
-    offset.value = DASH;
-    offset.value = withTiming(0, { duration: 1200, easing: Easing.out(Easing.cubic) });
+    offset.setValue(DASH);
+    Animated.timing(offset, {
+      toValue: 0,
+      duration: 1200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
   }, [data]);
-
-  const animatedProps = useAnimatedProps(() => ({ strokeDashoffset: offset.value }));
 
   return (
     <Svg width={W} height={H}>
@@ -96,8 +95,8 @@ function AreaChart({ data, color }: { data: number[]; color: string }) {
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray={DASH}
-        animatedProps={animatedProps}
+        strokeDasharray={`${DASH}`}
+        strokeDashoffset={offset as unknown as string}
       />
     </Svg>
   );
@@ -116,6 +115,7 @@ function StatCard({ label, value, c }: { label: string; value: string; c: typeof
 export function DashboardScreen() {
   const scheme = useColorScheme();
   const c = THEME[scheme === 'dark' ? 'dark' : 'light'];
+  const { t } = useLang();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,8 +146,14 @@ export function DashboardScreen() {
 
       {/* En-tête */}
       <View style={[styles.header, { borderBottomColor: c.border }]}>
-        <Text style={[styles.headerTitle, { color: c.text }]}>Tableau de bord</Text>
-        {email ? <Text style={[styles.headerEmail, { color: c.muted }]}>{email}</Text> : null}
+        <Text style={[styles.headerTitle, { color: c.text }]}>{t.dashTitle}</Text>
+        {email ? (
+          <View style={[styles.pill, { backgroundColor: c.text }]}>
+            <Text style={[styles.pillText, { color: c.bg }]}>
+              {email.split('@')[0]}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {loading ? (
@@ -161,14 +167,14 @@ export function DashboardScreen() {
         >
           {/* Cartes de métriques */}
           <View style={styles.statsGrid}>
-            <StatCard label="Exécutions totales" value={(stats?.totalRuns ?? 0).toLocaleString('fr-FR')} c={c} />
-            <StatCard label="Taux de succès" value={`${stats?.successRate ?? 0}%`} c={c} />
-            <StatCard label="Workflows actifs" value={String(stats?.activeWorkflows ?? 0)} c={c} />
+            <StatCard label={t.totalRuns} value={(stats?.totalRuns ?? 0).toLocaleString()} c={c} />
+            <StatCard label={t.successRate} value={`${stats?.successRate ?? 0}%`} c={c} />
+            <StatCard label={t.activeWorkflows} value={String(stats?.activeWorkflows ?? 0)} c={c} />
           </View>
 
           {/* Graphique d'activité */}
           <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border }]}>
-            <Text style={[styles.cardTitle, { color: c.text }]}>7 derniers jours</Text>
+            <Text style={[styles.cardTitle, { color: c.text }]}>{t.last7Days}</Text>
             <View style={styles.chartWrap}>
               <AreaChart data={chartValues} color={chartColor} />
             </View>
@@ -184,7 +190,7 @@ export function DashboardScreen() {
           {(stats?.topWorkflows?.length ?? 0) > 0 && (
             <View style={[styles.card, styles.cardNoPad, { backgroundColor: c.card, borderColor: c.border }]}>
               <Text style={[styles.cardTitle, styles.cardTitlePad, { color: c.text, borderBottomColor: c.border }]}>
-                Top workflows
+                {t.topWorkflows}
               </Text>
               {stats!.topWorkflows.map((wf, i) => (
                 <View
@@ -203,7 +209,7 @@ export function DashboardScreen() {
                     {/* Badge statut */}
                     <View style={[styles.badge, { backgroundColor: wf.active ? '#16a34a20' : `${c.border}80` }]}>
                       <Text style={[styles.badgeText, { color: wf.active ? '#16a34a' : c.muted }]}>
-                        {wf.active ? 'Actif' : 'Inactif'}
+                        {wf.active ? t.active : t.inactive}
                       </Text>
                     </View>
                     <Text style={[styles.wfRuns, { color: c.muted }]}>{wf.runs.toLocaleString('fr-FR')}</Text>
@@ -227,6 +233,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 17, fontWeight: '700' },
   headerEmail: { fontSize: 12, marginTop: 2 },
+  pill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999 },
+  pillText: { fontSize: 13, fontWeight: '600' },
   logoutBtn: { paddingVertical: 6, paddingHorizontal: 2 },
   logoutText: { fontSize: 13 },
 

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLang } from '../contexts/LanguageContext';
 
 const THEME = {
   light: { bg: '#ffffff', text: '#000000', muted: '#9ca3af' },
@@ -8,12 +9,13 @@ const THEME = {
 
 export function NotificationsScreen() {
   const c = THEME[useColorScheme() === 'dark' ? 'dark' : 'light'];
+  const { t } = useLang();
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]}>
       <View style={styles.inner}>
-        <Text style={[styles.title, { color: c.text }]}>Notifications</Text>
-        <Text style={[styles.sub, { color: c.muted }]}>À venir</Text>
+        <Text style={[styles.title, { color: c.text }]}>{t.notifications}</Text>
+        <Text style={[styles.sub, { color: c.muted }]}>{t.comingSoon}</Text>
       </View>
     </SafeAreaView>
   );

@@ -1,11 +1,13 @@
 import { useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { LanguageProvider, useLang } from './src/contexts/LanguageContext';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { WorkflowsScreen } from './src/screens/WorkflowsScreen';
+import { WorkflowCreateScreen } from './src/screens/WorkflowCreateScreen';
 import { ServicesScreen } from './src/screens/ServicesScreen';
 import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
@@ -13,6 +15,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 export type RootStackParamList = {
   Login: undefined;
   Main: undefined;
+  WorkflowCreate: undefined;
 };
 
 export type TabParamList = {
@@ -37,6 +40,7 @@ const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
 function MainTabs() {
   const scheme = useColorScheme();
   const dark = scheme === 'dark';
+  const { t } = useLang();
 
   return (
     <Tab.Navigator
@@ -58,22 +62,25 @@ function MainTabs() {
         ),
       })}
     >
-      <Tab.Screen name="Dashboard"     component={DashboardScreen}     options={{ tabBarLabel: 'Accueil' }} />
-      <Tab.Screen name="Workflows"     component={WorkflowsScreen}     options={{ tabBarLabel: 'Workflows' }} />
-      <Tab.Screen name="Services"      component={ServicesScreen}      options={{ tabBarLabel: 'Services' }} />
-      <Tab.Screen name="Notifications" component={NotificationsScreen} options={{ tabBarLabel: 'Notifs' }} />
-      <Tab.Screen name="Settings"      component={SettingsScreen}      options={{ tabBarLabel: 'Compte' }} />
+      <Tab.Screen name="Dashboard"     component={DashboardScreen}     options={{ tabBarLabel: t.tabHome }} />
+      <Tab.Screen name="Workflows"     component={WorkflowsScreen}     options={{ tabBarLabel: t.tabWorkflows }} />
+      <Tab.Screen name="Services"      component={ServicesScreen}      options={{ tabBarLabel: t.tabServices }} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} options={{ tabBarLabel: t.tabNotifs }} />
+      <Tab.Screen name="Settings"      component={SettingsScreen}      options={{ tabBarLabel: t.tabAccount }} />
     </Tab.Navigator>
   );
 }
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Main" component={MainTabs} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <LanguageProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="WorkflowCreate" component={WorkflowCreateScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </LanguageProvider>
   );
 }
