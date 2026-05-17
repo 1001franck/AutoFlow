@@ -8,6 +8,8 @@ export const T = {
     successRate: 'Taux de succès',
     activeWorkflows: 'Workflows actifs',
     last7Days: '7 derniers jours',
+    last30Days: '30 derniers jours',
+    dayUnit: 'j',
     topWorkflows: 'Top workflows',
 
     // Commun
@@ -121,6 +123,8 @@ export const T = {
     successRate: 'Success rate',
     activeWorkflows: 'Active workflows',
     last7Days: 'Last 7 days',
+    last30Days: 'Last 30 days',
+    dayUnit: 'd',
     topWorkflows: 'Top workflows',
 
     // Commun

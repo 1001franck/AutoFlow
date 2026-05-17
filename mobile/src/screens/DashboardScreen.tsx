@@ -194,7 +194,9 @@ export function DashboardScreen() {
           {/* Graphique d'activité */}
           <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border }]}>
             <View style={styles.chartHeader}>
-              <Text style={[styles.cardTitle, { color: c.text, marginBottom: 0 }]}>{t.last7Days}</Text>
+              <Text style={[styles.cardTitle, { color: c.text, marginBottom: 0 }]}>
+                {period === 7 ? t.last7Days : t.last30Days}
+              </Text>
               <View style={[styles.periodToggle, { borderColor: c.border }]}>
                 {([7, 30] as const).map((p) => (
                   <TouchableOpacity
@@ -204,7 +206,7 @@ export function DashboardScreen() {
                     activeOpacity={0.7}
                   >
                     <Text style={[styles.periodBtnText, { color: period === p ? c.bg : c.muted }]}>
-                      {p}j
+                      {p}{t.dayUnit}
                     </Text>
                   </TouchableOpacity>
                 ))}
