@@ -1,29 +1,91 @@
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useLang } from '../contexts/LanguageContext';
+import type { Tr } from '../i18n';
 
 const THEME = {
-  light: { bg: '#ffffff', text: '#000000', muted: '#9ca3af' },
-  dark:  { bg: '#0a0a0a', text: '#ffffff', muted: '#6b7280' },
+  light: { bg: '#ffffff', card: '#f9fafb', border: '#e5e7eb', text: '#000000', muted: '#6b7280', sub: '#9ca3af' },
+  dark:  { bg: '#0a0a0a', card: '#1a1a1a', border: '#2a2a2a', text: '#ffffff', muted: '#9ca3af', sub: '#6b7280' },
 };
 
+interface ServiceDef {
+  id: string;
+  name: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  descKey: keyof Tr;
+}
+
+const SERVICES: ServiceDef[] = [
+  { id: 'gmail',    name: 'Gmail',    icon: 'mail-outline',          descKey: 'serviceGmailDesc' },
+  { id: 'discord',  name: 'Discord',  icon: 'chatbubbles-outline',   descKey: 'serviceDiscordDesc' },
+  { id: 'telegram', name: 'Telegram', icon: 'paper-plane-outline',   descKey: 'serviceTelegramDesc' },
+  { id: 'notion',   name: 'Notion',   icon: 'document-text-outline', descKey: 'serviceNotionDesc' },
+  { id: 'webhook',  name: 'Webhook',  icon: 'link-outline',          descKey: 'serviceWebhookDesc' },
+];
+
 export function ServicesScreen() {
-  const c = THEME[useColorScheme() === 'dark' ? 'dark' : 'light'];
+  const scheme = useColorScheme();
+  const c = THEME[scheme === 'dark' ? 'dark' : 'light'];
   const { t } = useLang();
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: c.bg }]}>
-      <View style={styles.inner}>
+      <View style={[styles.header, { borderBottomColor: c.border }]}>
         <Text style={[styles.title, { color: c.text }]}>{t.services}</Text>
-        <Text style={[styles.sub, { color: c.muted }]}>{t.comingSoon}</Text>
+        <Text style={[styles.subtitle, { color: c.muted }]}>{t.servicesSubtitle}</Text>
       </View>
+
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border }]}>
+          {SERVICES.map((svc, i) => (
+            <View
+              key={svc.id}
+              style={[styles.row, { borderBottomColor: c.border }, i === SERVICES.length - 1 && styles.rowLast]}
+            >
+              <View style={[styles.iconWrap, { backgroundColor: c.border }]}>
+                <Ionicons name={svc.icon} size={18} color={c.muted} />
+              </View>
+
+              <View style={styles.rowCenter}>
+                <Text style={[styles.svcName, { color: c.text }]}>{svc.name}</Text>
+                <Text style={[styles.svcDesc, { color: c.sub }]} numberOfLines={2}>
+                  {t[svc.descKey] as string}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  inner: { flex: 1, paddingHorizontal: 24, paddingTop: 32 },
-  title: { fontSize: 26, fontWeight: '700', marginBottom: 6 },
-  sub: { fontSize: 14 },
+
+  header: {
+    paddingHorizontal: 24, paddingVertical: 20, borderBottomWidth: 1,
+  },
+  title: { fontSize: 26, fontWeight: '700', marginBottom: 4 },
+  subtitle: { fontSize: 13 },
+
+  scroll: { padding: 24 },
+
+  card: { borderWidth: 1, borderRadius: 14, overflow: 'hidden' },
+
+  row: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1,
+  },
+  rowLast: { borderBottomWidth: 0 },
+
+  iconWrap: {
+    width: 38, height: 38, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+
+  rowCenter: { flex: 1, minWidth: 0 },
+  svcName: { fontSize: 14, fontWeight: '600', marginBottom: 3 },
+  svcDesc: { fontSize: 12, lineHeight: 17 },
 });
