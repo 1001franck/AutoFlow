@@ -50,6 +50,8 @@ export const T = {
     stepsSection: 'Étapes',
     addStep: 'Ajouter une étape',
     chooseAccount: 'Choisir un compte…',
+    descriptionLabel: 'Description',
+    descriptionPlaceholder: 'Optionnel',
     webhookNote: "L'URL webhook sera générée à la sauvegarde.",
     noAccount: (c: string) => `Aucun compte ${c} — ajoutez-en depuis le web.`,
     chooseAccountTitle: 'Choisir un compte',
@@ -63,6 +65,7 @@ export const T = {
 
     // Validation
     fieldRequired: 'Ce champ est requis',
+    saveError: 'Une erreur est survenue. Vérifiez votre connexion et réessayez.',
 
     // Types d'actions
     actionDiscord: 'Discord — Message',
@@ -140,6 +143,8 @@ export const T = {
     stepsSection: 'Steps',
     addStep: 'Add a step',
     chooseAccount: 'Choose an account…',
+    descriptionLabel: 'Description',
+    descriptionPlaceholder: 'Optional',
     webhookNote: 'The webhook URL will be generated on save.',
     noAccount: (c: string) => `No ${c} account — add one from the web.`,
     chooseAccountTitle: 'Choose an account',
@@ -153,6 +158,7 @@ export const T = {
 
     // Validation
     fieldRequired: 'This field is required',
+    saveError: 'Something went wrong. Check your connection and try again.',
 
     // Types d'actions
     actionDiscord: 'Discord — Message',

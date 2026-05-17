@@ -162,6 +162,7 @@ export function WorkflowCreateScreen() {
   };
 
   const [name, setName] = useState('Nouveau workflow');
+  const [description, setDescription] = useState('');
   const [triggerType, setTriggerType] = useState('webhook');
   const [triggerConfig, setTriggerConfig] = useState<Record<string, string>>({});
   const [steps, setSteps] = useState<StepForm[]>([]);
@@ -251,6 +252,7 @@ export function WorkflowCreateScreen() {
     try {
       await api.post('/workflows', {
         name: name.trim(),
+        description: description.trim() || undefined,
         triggerType,
         triggerConfig,
         steps: steps.map((s, i) => {
@@ -346,6 +348,22 @@ export function WorkflowCreateScreen() {
               autoCorrect={false}
             />
             {errors['name'] ? <Text style={styles.errorText}>{errors['name']}</Text> : null}
+          </View>
+
+          {/* Description */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: c.muted }]}>{t.descriptionLabel}</Text>
+            <TextInput
+              style={[styles.input, styles.inputMulti, { backgroundColor: c.input, borderColor: c.border, color: c.text }]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder={t.descriptionPlaceholder}
+              placeholderTextColor={c.sub}
+              multiline
+              numberOfLines={3}
+              autoCorrect={false}
+              textAlignVertical="top"
+            />
           </View>
 
           {/* Déclencheur */}
