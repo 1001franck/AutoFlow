@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, useColorScheme, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useColorScheme, RefreshControl, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useLang } from '../contexts/LanguageContext';
@@ -150,7 +150,13 @@ export function ServicesScreen() {
           })}
         </View>
 
-        <Text style={[styles.hint, { color: c.sub }]}>{t.serviceManageWeb}</Text>
+        <TouchableOpacity
+          style={[styles.webBtn, { borderColor: c.text }]}
+          onPress={() => Linking.openURL('https://auto-flow-iota.vercel.app/dashboard')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.webBtnText, { color: c.text }]}>{t.serviceManageWeb}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -187,5 +193,9 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexShrink: 0 },
   badgeText: { fontSize: 11, fontWeight: '600' },
 
-  hint: { fontSize: 12, textAlign: 'center', marginTop: 16 },
+  webBtn: {
+    borderWidth: 1, borderRadius: 12, marginTop: 16,
+    paddingVertical: 14, alignItems: 'center',
+  },
+  webBtnText: { fontSize: 14, fontWeight: '600' },
 });
