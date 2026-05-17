@@ -57,6 +57,26 @@ export default function App() {
     return !localStorage.getItem('isAuth');
   });
 
+  // Keep-alive : ping /health toutes les 10 min quand l'onglet est visible
+  // pour empêcher Render free tier de s'endormir pendant la session
+  useEffect(() => {
+    const ping = () => {
+      if (document.visibilityState === 'visible' && localStorage.getItem('isAuth')) {
+        api.get('/health').catch(() => {});
+      }
+    };
+
+    const interval = setInterval(ping, 10 * 60 * 1000);
+
+    // Ping immédiat quand l'utilisateur revient sur l'onglet après une absence
+    document.addEventListener('visibilitychange', ping);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', ping);
+    };
+  }, []);
+
   useEffect(() => {
     if (ready) return;
 
