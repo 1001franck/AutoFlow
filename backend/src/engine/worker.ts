@@ -132,18 +132,36 @@ async function processJob(job: Job<WorkflowJobData>) {
 
   // Crée une notification persistante en cas d'échec ou d'exécution partielle
   if (globalStatus === 'failed' || globalStatus === 'partial') {
+    const message = globalStatus === 'failed'
+      ? 'Toutes les étapes ont échoué.'
+      : 'Certaines étapes ont échoué.';
+
     await prisma.notification.create({
       data: {
         userId: workflow.userId,
         type: 'run_failed',
         title: workflow.name,
-        message: globalStatus === 'failed'
-          ? 'Toutes les étapes ont échoué.'
-          : 'Certaines étapes ont échoué.',
+        message,
         runId: finishedRun.id,
       },
     });
 
     emitToUser(workflow.userId, 'notification:new', { unread: true });
+
+    // Envoie une push notification Expo si l'utilisateur a un token enregistré
+    const user = await prisma.user.findUnique({ where: { id: workflow.userId }, select: { pushToken: true } });
+    if (user?.pushToken) {
+      fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          to: user.pushToken,
+          title: workflow.name,
+          body: message,
+          data: { runId: finishedRun.id },
+          sound: 'default',
+        }),
+      }).catch(() => {}); // non bloquant
+    }
   }
 }
