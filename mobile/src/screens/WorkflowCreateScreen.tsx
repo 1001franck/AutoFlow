@@ -169,6 +169,8 @@ export function WorkflowCreateScreen() {
   const [saving, setSaving] = useState(false);
   const [showStepPicker, setShowStepPicker] = useState(false);
   const [credPicker, setCredPicker] = useState<CredPicker>(null);
+  const [renamingUid, setRenamingUid] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState('');
 
@@ -183,6 +185,10 @@ export function WorkflowCreateScreen() {
 
   const removeStep = useCallback((uid: string) => {
     setSteps(prev => prev.filter(s => s.uid !== uid));
+  }, []);
+
+  const renameStep = useCallback((uid: string, label: string) => {
+    setSteps(prev => prev.map(s => s.uid === uid ? { ...s, label } : s));
   }, []);
 
   const moveStep = useCallback((uid: string, dir: -1 | 1) => {
@@ -387,7 +393,13 @@ export function WorkflowCreateScreen() {
                     <View style={[styles.stepBadge, { backgroundColor: c.border }]}>
                       <Text style={[styles.stepBadgeText, { color: c.muted }]}>{i + 1}</Text>
                     </View>
-                    <Text style={[styles.stepName, { color: c.text }]} numberOfLines={1}>{step.label}</Text>
+                    <TouchableOpacity
+                      style={{ flex: 1 }}
+                      onLongPress={() => { setRenamingUid(step.uid); setRenameValue(step.label); }}
+                      activeOpacity={1}
+                    >
+                      <Text style={[styles.stepName, { color: c.text }]} numberOfLines={1}>{step.label}</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => moveStep(step.uid, -1)} style={styles.removeBtn} activeOpacity={0.7} disabled={i === 0}>
                       <Ionicons name="chevron-up" size={17} color={i === 0 ? c.border : c.muted} />
                     </TouchableOpacity>
@@ -493,6 +505,35 @@ export function WorkflowCreateScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      {/* Modal — renommer une étape */}
+      <Modal visible={!!renamingUid} transparent animationType="fade" onRequestClose={() => setRenamingUid(null)}>
+        <Pressable style={styles.overlay} onPress={() => setRenamingUid(null)}>
+          <Pressable style={[styles.renameBox, { backgroundColor: c.card, borderColor: c.border }]}>
+            <TextInput
+              style={[styles.input, { backgroundColor: c.input, borderColor: c.border, color: c.text }]}
+              value={renameValue}
+              onChangeText={setRenameValue}
+              autoFocus
+              autoCorrect={false}
+            />
+            <View style={styles.renameActions}>
+              <TouchableOpacity onPress={() => setRenamingUid(null)} style={[styles.renameBtn, { borderColor: c.border }]} activeOpacity={0.7}>
+                <Text style={[styles.renameBtnText, { color: c.muted }]}>{t.cancel}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  if (renamingUid && renameValue.trim()) renameStep(renamingUid, renameValue.trim());
+                  setRenamingUid(null);
+                }}
+                style={[styles.renameBtn, { backgroundColor: c.text }]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.renameBtnText, { color: c.bg }]}>{t.save}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -582,4 +623,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fee2e2',
   },
   errorBannerText: { fontSize: 13, color: '#ef4444', flex: 1 },
+
+  renameBox: {
+    margin: 32, borderRadius: 16, borderWidth: 1, padding: 20, gap: 16,
+  },
+  renameActions: { flexDirection: 'row', gap: 10 },
+  renameBtn: {
+    flex: 1, height: 42, borderRadius: 10, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  renameBtnText: { fontSize: 14, fontWeight: '600' },
 });
