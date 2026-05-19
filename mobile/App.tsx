@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { LanguageProvider, useLang } from './src/contexts/LanguageContext';
 import { registerPushToken } from './src/utils/pushNotifications';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { WorkflowsScreen } from './src/screens/WorkflowsScreen';
@@ -54,7 +55,7 @@ function MainTabs() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: dark ? 'rgba(18,18,18,0.92)' : 'rgba(255,255,255,0.92)',
+          backgroundColor: 'transparent',
           borderTopWidth: 0,
           borderRadius: 28,
           marginHorizontal: 16,
@@ -62,12 +63,16 @@ function MainTabs() {
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: dark ? 0.5 : 0.12,
-          shadowRadius: 24,
-          elevation: 12,
+          elevation: 0,
+          overflow: 'hidden',
         },
+        tabBarBackground: () => (
+          <BlurView
+            intensity={dark ? 60 : 70}
+            tint={dark ? 'dark' : 'light'}
+            style={[StyleSheet.absoluteFill, { borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+          />
+        ),
         tabBarActiveTintColor: dark ? '#ffffff' : '#000000',
         tabBarInactiveTintColor: dark ? '#555555' : '#b0b0b0',
         tabBarLabelStyle: { fontSize: 10, fontWeight: '500' },
