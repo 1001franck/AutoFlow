@@ -37,6 +37,15 @@ export const T = {
     account: 'Compte',
     logout: 'Déconnexion',
     language: 'Langue',
+    security: 'Sécurité',
+    currentPassword: 'Mot de passe actuel',
+    newPassword: 'Nouveau mot de passe',
+    confirmPassword: 'Confirmer',
+    updatePassword: 'Mettre à jour',
+    passwordUpdated: 'Mot de passe mis à jour.',
+    passwordMismatch: 'Les mots de passe ne correspondent pas.',
+    passwordTooShort: 'Minimum 8 caractères.',
+    passwordIncorrect: 'Mot de passe actuel incorrect.',
 
     // Notifications
     notifications: 'Notifications',
@@ -152,6 +161,15 @@ export const T = {
     account: 'Account',
     logout: 'Log out',
     language: 'Language',
+    security: 'Security',
+    currentPassword: 'Current password',
+    newPassword: 'New password',
+    confirmPassword: 'Confirm',
+    updatePassword: 'Update password',
+    passwordUpdated: 'Password updated.',
+    passwordMismatch: 'Passwords do not match.',
+    passwordTooShort: 'Minimum 8 characters.',
+    passwordIncorrect: 'Current password is incorrect.',
 
     // Notifications
     notifications: 'Notifications',
