@@ -1,6 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import api from '../api/client';
+
+// En Expo Go (SDK 53+), les push distantes ne sont plus supportées
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -13,6 +17,7 @@ Notifications.setNotificationHandler({
 });
 
 export async function registerPushToken(): Promise<void> {
+  if (isExpoGo) return;
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
     let finalStatus = existing;
